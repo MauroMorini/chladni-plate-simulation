@@ -1,0 +1,11 @@
+build/
+cpp/build/
+output/
+*.vtu
+*.pvtu
+*.csv
+.vscode/
+.idea/
+cmake-build-*/
+__pycache__/
+.cache
