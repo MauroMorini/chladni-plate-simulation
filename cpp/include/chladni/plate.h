@@ -36,6 +36,7 @@ namespace Chladni
       public:
         explicit Plate(const Parameters &parameters);
 
+        const Parameters           &get_parameters() const;
         const DoFHandler<dim>      &get_dof_handler() const;
         const MappingQ<dim>        &get_mapping() const;
         const SparsityPattern      &get_sparsity_pattern() const;

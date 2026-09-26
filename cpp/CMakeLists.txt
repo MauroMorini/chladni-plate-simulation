@@ -34,6 +34,7 @@ add_library(chladni_core
   src/eigenmode_solver.cc
   src/forced_response_solver.cc
   src/output.cc
+  src/stress.cc
   )
 target_include_directories(chladni_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 deal_ii_setup_target(chladni_core)

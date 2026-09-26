@@ -15,12 +15,25 @@ namespace Chladni
 
     /**
      * Write a displacement field to a .vtu file (for ParaView/VisIt). Besides the displacement
-     * vector it contains the scalar field "abs_uz" = |u_z|: where it is (close to) zero the
-     * plate does not move vertically. These are the nodal lines, where the sand gathers.
+     * vector it contains the scalar fields "abs_uz" = |u_z| and "von_mises" (von Mises stress).
+     * Where |u_z| is (close to) zero the plate does not move vertically. These are the nodal
+     * lines, where the sand gathers.
      */
     void write_vtu(const Plate          &plate,
                    const Vector<double> &displacement,
                    const std::string    &filename);
+
+    /**
+     * Write the top face of the plate to a CSV table "x,y,uz,von_mises": the vertical
+     * displacement u_z and the von Mises stress, evaluated at the Q_p nodes of the top face.
+     *
+     * On our uniform mesh these points form a regular grid of (p N + 1) x (p N + 1) points
+     * (N cells per side, degree p). Rows are sorted by y, then by x, which makes it easy to
+     * reshape the data into 2D arrays, e.g. in numpy.
+     */
+    void write_top_surface_csv(const Plate          &plate,
+                               const Vector<double> &displacement,
+                               const std::string    &filename);
 
     /** Write a CSV table "mode,frequency_hz". */
     void write_eigenfrequencies_csv(const std::vector<Eigenmode> &modes,

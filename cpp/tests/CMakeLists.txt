@@ -3,6 +3,7 @@ set(TESTS
   test_parameters
   test_assembly
   test_bolt_dofs
+  test_stress
   test_eigenmodes
   test_forced_response
   )

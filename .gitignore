@@ -8,4 +8,6 @@ output/
 .idea/
 cmake-build-*/
 __pycache__/
-.cache
+.venv/
+.cache/
+.pytest_cache/

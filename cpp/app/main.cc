@@ -34,14 +34,14 @@ namespace
                                                   parameters.number_of_eigenmodes);
 
         for (unsigned int k = 0; k < modes.size(); ++k) {
-            std::ostringstream filename;
-            filename << parameters.output_directory << "/mode_" << std::setw(2)
-                     << std::setfill('0') << k << '_' << frequency_tag(modes[k].frequency)
-                     << ".vtu";
-            write_vtu(plate, modes[k].displacement, filename.str());
+            std::ostringstream basename;
+            basename << parameters.output_directory << "/mode_" << std::setw(2)
+                     << std::setfill('0') << k << '_' << frequency_tag(modes[k].frequency);
+            write_vtu(plate, modes[k].displacement, basename.str() + ".vtu");
+            write_top_surface_csv(plate, modes[k].displacement, basename.str() + "_top.csv");
 
             std::cout << "  mode " << k << ": " << std::setprecision(6) << modes[k].frequency
-                      << " Hz  -> " << filename.str() << std::endl;
+                      << " Hz  -> " << basename.str() << ".vtu / _top.csv" << std::endl;
         }
         write_eigenfrequencies_csv(modes, parameters.output_directory + "/eigenfrequencies.csv");
     }
@@ -53,13 +53,14 @@ namespace
         const ForcedResponseSolver forced_solver(plate, parameters.drive_amplitude);
         const auto displacement = forced_solver.solve(parameters.frequency);
 
-        const std::string filename =
-            parameters.output_directory + "/forced_" + frequency_tag(parameters.frequency) + ".vtu";
-        write_vtu(plate, displacement, filename);
+        const std::string basename =
+            parameters.output_directory + "/forced_" + frequency_tag(parameters.frequency);
+        write_vtu(plate, displacement, basename + ".vtu");
+        write_top_surface_csv(plate, displacement, basename + "_top.csv");
 
         std::cout << "  response amplitude G = RMS(u_z) / A = "
-                  << forced_solver.response_amplitude(displacement) << "  -> " << filename
-                  << std::endl;
+                  << forced_solver.response_amplitude(displacement) << "  -> " << basename
+                  << ".vtu / _top.csv" << std::endl;
     }
 
     void run_sweep(const Parameters &parameters, const Plate &plate)

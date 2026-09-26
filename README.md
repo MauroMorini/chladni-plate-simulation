@@ -7,7 +7,7 @@ do not move, the *nodal lines*, and forms the famous Chladni figures.
 
 ```
 cpp/            C++ / deal.II simulation code (main part)
-python/         Python helpers (planned: generate .prm files, plot results)
+python/         Python visualization package (uv, numpy + matplotlib)
 presentation/   Slides (planned)
 ```
 
@@ -31,8 +31,8 @@ The program has three modes:
 
 | Mode         | What it solves | Output |
 |--------------|----------------|--------|
-| `eigenmodes` | K u = ω² M u with u = 0 on the bolt. Returns the N modes whose frequency f = ω/2π is closest to `Frequency` (SLEPc shift-and-invert around σ = (2π f)²). | `mode_XX_<f>Hz.vtu`, `eigenfrequencies.csv` |
-| `forced`     | The experiment: the bolt is shaken as A cos(ωt), and we solve for the steady amplitude field û with (K − ω² M) û = 0 and û = (0, 0, A) on the bolt. This has a solution for every frequency that is not exactly an eigenfrequency. | `forced_<f>Hz.vtu` |
+| `eigenmodes` | K u = ω² M u with u = 0 on the bolt. Returns the N modes whose frequency f = ω/2π is closest to `Frequency` (SLEPc shift-and-invert around σ = (2π f)²). | `mode_XX_<f>Hz.vtu`, `mode_XX_<f>Hz_top.csv`, `eigenfrequencies.csv` |
+| `forced`     | The experiment: the bolt is shaken as A cos(ωt), and we solve for the steady amplitude field û with (K − ω² M) û = 0 and û = (0, 0, A) on the bolt. This has a solution for every frequency that is not exactly an eigenfrequency. | `forced_<f>Hz.vtu`, `forced_<f>Hz_top.csv` |
 | `sweep`      | `forced` for many frequencies. It records the response amplitude G(f) = RMS(û_z) / A = ‖û_z‖_L² / (A \|Ω\|^½). G = 1 means the plate moves as much as the bolt, and the peaks of G are the resonances. | `sweep.csv` |
 
 Near an eigenfrequency the forced response looks like the corresponding eigenmode. That is why a
@@ -67,7 +67,20 @@ parameter file that was used.
 
 ### Viewing the Chladni figure
 
-Open a `.vtu` file in ParaView, color by `abs_uz` (= |u_z|) and look at the plate from the top (+z).
+The quickest way is the Python package in `python/`, which is managed with [uv](https://docs.astral.sh/uv/).
+It reads the `*_top.csv` files, which hold u_z on the top face as a regular grid:
+
+```bash
+cd python
+uv run chladni-plot ../cpp/build/output/mode_*_top.csv
+```
+
+Bright regions are at rest (that's where the sand goes), dark regions vibrate, and the orange lines
+are the nodal lines u_z = 0. `--field stress` shows a von Mises stress heatmap instead, and
+`uv run chladni-3d <file> --animate` shows a rotatable, oscillating 3D view. See `python/README.md`
+for more.
+
+For the full 3D fields, open a `.vtu` file in ParaView, color by `abs_uz` (= |u_z|) or `von_mises` (von Mises stress) and look at the plate from the top (+z).
 The dark lines, where |u_z| ≈ 0, are the nodal lines, which is where the sand would collect. The
 `displacement` field can be used with the *Warp By Vector* filter to see the plate deform.
 
@@ -103,7 +116,8 @@ All parameters live in a deal.II `.prm` file (see `cpp/parameters/default.prm`).
 | `include/chladni/plate.h` | `Plate`: mesh, Q_p³ finite elements, assembly of K and M, bolt DoFs |
 | `include/chladni/eigenmode_solver.h` | `EigenmodeSolver`: clamped bolt, SLEPc Krylov–Schur + shift-and-invert (MUMPS) |
 | `include/chladni/forced_response_solver.h` | `ForcedResponseSolver`: shaken bolt, UMFPACK solve per frequency, G(f), sweep |
-| `include/chladni/output.h` | `.vtu` output (with \|u_z\|) and `.csv` tables |
+| `include/chladni/output.h` | `.vtu` output (with \|u_z\| and von Mises stress), top-face grid (u_z, stress) and `.csv` tables |
+| `include/chladni/stress.h` | Hooke's law σ = λ tr(ε) I + 2μ ε and the von Mises stress |
 | `app/main.cc` | reads the parameters and runs the selected mode |
 | `tests/` | CTest executables (see below) |
 
@@ -113,6 +127,7 @@ All parameters live in a deal.II `.prm` file (see `cpp/parameters/default.prm`).
 |------|--------|
 | `test_parameters` | `.prm` parsing, defaults, Lamé constants, invalid input rejected |
 | `test_assembly` | K annihilates all 6 rigid body motions, M integrates the total mass ρL²h |
+| `test_stress` | von Mises stress for uniaxial tension (= σ_xx) and pure shear (= √3 τ), no stress for a rigid rotation |
 | `test_bolt_dofs` | bolt DoFs lie inside the bolt radius, expected count, tiny bolt falls back to the center axis |
 | `test_eigenmodes` | SLEPc frequencies match a dense LAPACK solve (lowest and around a target), square symmetry gives equal-frequency pairs, modes vanish on the bolt |
 | `test_forced_response` | G(f → 0) = 1 (rigid motion), response grows without bound towards an excited eigenfrequency, sweep bookkeeping |

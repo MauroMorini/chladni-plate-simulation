@@ -134,6 +134,11 @@ namespace Chladni
                       << std::endl;
     }
 
+    const Parameters &Plate::get_parameters() const
+    {
+        return parameters;
+    }
+
     const DoFHandler<dim> &Plate::get_dof_handler() const
     {
         return dof_handler;
