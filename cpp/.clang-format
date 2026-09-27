@@ -1,0 +1,29 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
+
+# Function params
+AlignAfterOpenBracket: Align
+BinPackParameters: false
+BinPackArguments: false
+
+# References / pointers
+PointerAlignment: Right
+ReferenceAlignment: Right
+
+# Nice alignment
+AlignConsecutiveDeclarations: true
+
+# deal.II-friendly
+BreakBeforeBraces: Allman
+NamespaceIndentation: All
+SortIncludes: false
+AlwaysBreakTemplateDeclarations: Yes
+
+# Override for control statements
+BraceWrapping:
+  AfterFunction: true       # functions: brace on new line
+  AfterClass: true          # classes: brace on new line
+  AfterNamespace: true      # namespaces: new line
+  AfterControlStatement: false  # for if/while/switch: same line
+  AfterExternBlock: true

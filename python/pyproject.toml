@@ -1,0 +1,23 @@
+[project]
+name = "chladni-viz"
+version = "0.1.0"
+description = "Visualization of the Chladni plate simulation (deal.II) results"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "matplotlib>=3.6",
+]
+
+[project.scripts]
+chladni-plot = "chladni_viz.plot_pattern:main"
+chladni-3d = "chladni_viz.view3d:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.13"]
+build-backend = "uv_build"
