@@ -14,15 +14,15 @@ subsection Material           # aluminium
 end
 
 subsection Discretization
-  set Cells per side          = 32  # must be even
+  set Cells per side          = 64  # must be even
   set Cells through thickness = 1
   set Polynomial degree       = 2   # >= 2 recommended (degree 1 locks for thin plates)
 end
 
 subsection Simulation
   set Mode                 = eigenmodes  # eigenmodes | forced | sweep
-  set Frequency            = 500         # target (eigenmodes) or drive (forced) frequency [Hz]
-  set Number of eigenmodes = 6
+  set Frequency            = 0         # target (eigenmodes) or drive (forced) frequency [Hz]
+  set Number of eigenmodes = 20
   set Drive amplitude      = 1e-6        # vertical amplitude of the shaken bolt [m]
   set Sweep min frequency  = 10          # [Hz]
   set Sweep max frequency  = 1000        # [Hz]

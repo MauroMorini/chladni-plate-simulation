@@ -9,6 +9,7 @@ do not move, the *nodal lines*, and forms the famous Chladni figures.
 cpp/            C++ / deal.II simulation code (main part)
 python/         Python visualization package (uv, numpy + matplotlib)
 presentation/   Slides (planned)
+docs/           Additional guides (building deal.II from source)
 ```
 
 ## Physics
@@ -42,15 +43,19 @@ have no peak in the sweep.
 
 ## Requirements
 
-deal.II ≥ 9.8 configured **with PETSc and SLEPc** (needed for the eigenmode solver). On Ubuntu 24.04:
+deal.II ≥ 9.8 configured **with PETSc and SLEPc** (needed for the eigenmode solver).
+
+The easiest way to get it is the official deal.II Docker image, which already contains PETSc and SLEPc.
+deal.II 9.8 is not released yet, so use the `master` image. From the repository root:
 
 ```bash
-sudo apt install petsc-dev slepc-dev
-cd <deal.II build dir>
-cmake -DDEAL_II_WITH_PETSC=ON -DPETSC_DIR=/usr/lib/petsc \
-      -DDEAL_II_WITH_SLEPC=ON -DSLEPC_DIR=/usr/lib/slepc .
-make -j 24 && sudo make install
+docker run --rm -it -v "$PWD":/home/dealii/chladni -w /home/dealii/chladni dealii/dealii:master-noble
 ```
+
+This opens a shell with deal.II installed and the repository mounted, so you can run the commands
+from [Build, test, run](#build-test-run) directly. Output files are written into your local checkout.
+
+To install deal.II natively instead, see [docs/building-dealii.md](docs/building-dealii.md).
 
 ## Build, test, run
 
