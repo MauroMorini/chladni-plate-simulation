@@ -23,6 +23,23 @@ namespace Chladni
     };
 
     /**
+     * How the shaker holds the center of the plate.
+     *
+     * - clamped: the shaker dictates the motion of the bolt (displacement drive). Eigenmodes have
+     *            u = 0 on the bolt, the forced bolt moves with amplitude A.
+     * - free:    the shaker only pushes on the bolt (force drive). Eigenmodes are those of the
+     *            completely free plate, the forced bolt is pushed with force amplitude F.
+     *
+     * A real shaker lies somewhere in between: a heavy, stiff shaker is close to "clamped", a
+     * light one (compared to the plate) is close to "free".
+     */
+    enum class CenterSupport
+    {
+        clamped,
+        free
+    };
+
+    /**
      * All user-facing parameters of the simulation, read from a deal.II .prm file.
      *
      * All quantities are in SI units (m, Pa, kg/m^3, Hz).
@@ -45,13 +62,15 @@ namespace Chladni
         unsigned int polynomial_degree       = 2;
 
         // Simulation.
-        Mode         mode                 = Mode::eigenmodes;
-        double       frequency            = 500.;
-        unsigned int number_of_eigenmodes = 6;
-        double       drive_amplitude      = 1e-6;
-        double       sweep_min_frequency  = 10.;
-        double       sweep_max_frequency  = 1000.;
-        unsigned int sweep_steps          = 200;
+        Mode          mode                 = Mode::eigenmodes;
+        CenterSupport center_support       = CenterSupport::clamped;
+        double        frequency            = 500.;
+        unsigned int  number_of_eigenmodes = 6;
+        double        drive_amplitude      = 1e-6;
+        double        drive_force          = 0.01;
+        double        sweep_min_frequency  = 10.;
+        double        sweep_max_frequency  = 1000.;
+        unsigned int  sweep_steps          = 200;
 
         // Output.
         std::string output_directory = "output";
@@ -77,4 +96,7 @@ namespace Chladni
 
     /** Convert a Mode into its name as used in the .prm file. */
     std::string to_string(Mode mode);
+
+    /** Convert a CenterSupport into its name as used in the .prm file. */
+    std::string to_string(CenterSupport center_support);
 } // namespace Chladni

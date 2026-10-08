@@ -21,9 +21,11 @@ end
 
 subsection Simulation
   set Mode                 = eigenmodes  # eigenmodes | forced | sweep
+  set Center support       = clamped     # clamped (displacement drive) | free (force drive)
   set Frequency            = 500         # target (eigenmodes) or drive (forced) frequency [Hz]
   set Number of eigenmodes = 6
-  set Drive amplitude      = 1e-6        # vertical amplitude of the shaken bolt [m]
+  set Drive amplitude      = 1e-6        # vertical amplitude of the shaken bolt [m] (clamped)
+  set Drive force          = 0.01        # vertical force amplitude on the bolt [N] (free)
   set Sweep min frequency  = 10          # [Hz]
   set Sweep max frequency  = 1000        # [Hz]
   set Sweep steps          = 200

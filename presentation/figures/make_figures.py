@@ -1,10 +1,11 @@
 """Create the figures for the slides (slides.typ).
 
 Most figures are small 1D toy computations done right here with numpy. The Chladni figures come
-from the deal.II simulation, run with the parameter file in ../simulation/.
+from the deal.II simulation, run with cpp/parameters/eigenmodes.prm. Its results are read from
+cpp/build/output/eigenmodes/.
 
 Run from the presentation/ folder:
-    (cd simulation && ../../cpp/build/chladni eigenmodes.prm)
+    (cd ../cpp/build && ./chladni ../parameters/eigenmodes.prm)
     uv run --project ../python python figures/make_figures.py
 """
 
@@ -20,7 +21,7 @@ from chladni_viz.io import load_top_surface
 from chladni_viz.view3d import draw_plate, surface_colors
 
 HERE = Path(__file__).parent
-SIMULATION = HERE.parent / "simulation" / "output"
+SIMULATION = HERE.parent.parent / "cpp" / "build" / "output"
 
 # Colors, matching slides.typ
 DARK = "#2D373C"

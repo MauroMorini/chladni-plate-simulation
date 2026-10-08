@@ -1,6 +1,7 @@
 // The SLEPc shift-and-invert eigenfrequencies agree with a dense LAPACK solve of the same
 // problem, both for the lowest modes and for modes around a target frequency. Because the
 // plate is square, some modes come in pairs with equal frequency (rotated by 90 degrees).
+// The free plate gives the same frequencies as LAPACK without its 6 rigid body motions.
 
 #include "test_utilities.h"
 
@@ -18,11 +19,13 @@
 
 using namespace Chladni;
 
-/** All eigenfrequencies of the clamped plate from a dense generalized eigenvalue solve. */
+/** All eigenfrequencies of the plate from a dense generalized eigenvalue solve. The bolt is
+ * clamped unless the plate's center support is free. */
 std::vector<double> reference_frequencies(const Plate &plate)
 {
-    const auto &bolt = plate.get_bolt_dofs();
-    const std::set<types::global_dof_index> bolt_set(bolt.begin(), bolt.end());
+    std::set<types::global_dof_index> bolt_set;
+    if (plate.get_parameters().center_support == CenterSupport::clamped)
+        bolt_set.insert(plate.get_bolt_dofs().begin(), plate.get_bolt_dofs().end());
 
     std::vector<types::global_dof_index> free_dofs;
     for (types::global_dof_index i = 0; i < plate.get_dof_handler().n_dofs(); ++i)
@@ -39,12 +42,14 @@ std::vector<double> reference_frequencies(const Plate &plate)
 
     Vector<double>              eigenvalues;
     std::vector<Vector<double>> eigenvectors;
+    // The lower bound is slightly below 0: round-off makes some rigid body motions of the free
+    // plate (omega^2 = 0) come out as tiny negative numbers.
     stiffness.compute_generalized_eigenvalues_symmetric(
-        mass, 0., std::numeric_limits<double>::max(), 0., eigenvalues, eigenvectors);
+        mass, -1., std::numeric_limits<double>::max(), 0., eigenvalues, eigenvectors);
 
     std::vector<double> frequencies;
     for (const double lambda : eigenvalues)
-        frequencies.push_back(std::sqrt(lambda) / (2. * numbers::PI));
+        frequencies.push_back(std::sqrt(std::max(lambda, 0.)) / (2. * numbers::PI));
     std::sort(frequencies.begin(), frequencies.end());
     return frequencies;
 }
@@ -100,6 +105,43 @@ int main(int argc, char *argv[])
     for (const auto dof : plate.get_bolt_dofs())
         max_on_bolt = std::max(max_on_bolt, std::abs(lowest[0].displacement[dof]));
     check(max_on_bolt < 1e-10, "mode 0 vanishes on the bolt");
+
+    // Free plate: the 6 lowest reference frequencies are the rigid body motions (f = 0). The
+    // solver leaves them out, so its modes start with reference[6].
+    Parameters free_parameters     = small_plate_parameters();
+    free_parameters.center_support = CenterSupport::free;
+    const Plate free_plate(free_parameters);
+    const auto  free_reference = reference_frequencies(free_plate);
+    check(free_reference[5] < EigenmodeSolver::rigid_body_frequency &&
+              free_reference[6] > EigenmodeSolver::rigid_body_frequency,
+          "free plate has exactly 6 rigid body motions");
+
+    const EigenmodeSolver free_solver(free_plate);
+    const auto            free_lowest = free_solver.solve(0., n_modes);
+    check(free_lowest.size() == n_modes, "free: the requested number of modes is returned");
+    for (unsigned int k = 0; k < n_modes; ++k)
+        check_relative(free_lowest[k].frequency,
+                       free_reference[6 + k],
+                       1e-6,
+                       "free: lowest elastic mode " + std::to_string(k));
+
+    // Around a target far above the rigid body motions.
+    const double free_target = free_reference[26];
+    std::vector<double> free_closest(free_reference.begin() + 6, free_reference.end());
+    std::sort(free_closest.begin(), free_closest.end(), [&](const double a, const double b) {
+        return std::abs(a * a - free_target * free_target) <
+               std::abs(b * b - free_target * free_target);
+    });
+    free_closest.resize(n_modes);
+    std::sort(free_closest.begin(), free_closest.end());
+
+    const auto free_around_target = free_solver.solve(free_target, n_modes);
+    for (unsigned int k = 0; k < n_modes; ++k)
+        check_relative(free_around_target[k].frequency,
+                       free_closest[k],
+                       1e-6,
+                       "free: mode " + std::to_string(k) + " around " +
+                           std::to_string(free_target) + " Hz");
 
     return 0;
 }

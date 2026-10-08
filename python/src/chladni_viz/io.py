@@ -59,6 +59,24 @@ def relative_field(surface, name):
     raise ValueError(f"unknown field '{name}', choose one of {list(FIELDS)}")
 
 
+def frequency_from_filename(filename):
+    """'mode_03_506.1Hz_top.csv' -> 506.1, or None if the name contains no frequency."""
+    frequency = re.search(r"(\d+(?:\.\d+)?)Hz", Path(filename).name)
+    return float(frequency.group(1)) if frequency else None
+
+
+def sorted_by_frequency(filenames):
+    """Sort files by the frequency in their name (files without one go last, by name).
+
+    Sorting by name alone is wrong for 100 or more modes ("mode_100" < "mode_11")."""
+
+    def key(filename):
+        frequency = frequency_from_filename(filename)
+        return (frequency is None, frequency or 0.0, str(filename))
+
+    return sorted(filenames, key=key)
+
+
 def title_from_filename(filename):
     """'mode_03_506.1Hz_top.csv' -> 'mode 3, 506.1 Hz', 'forced_500.0Hz_top.csv' -> 'forced, 500.0 Hz'"""
     name = Path(filename).name
