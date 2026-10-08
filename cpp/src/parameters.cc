@@ -95,6 +95,13 @@ namespace Chladni
                               "eigenmodes: vibration modes closest to 'Frequency'. "
                               "forced: response to shaking the bolt at 'Frequency'. "
                               "sweep: forced response for a range of frequencies.");
+            prm.declare_entry("Center support",
+                              to_string(defaults.center_support),
+                              Patterns::Selection("clamped|free"),
+                              "How the shaker holds the bolt. clamped: it dictates the bolt's "
+                              "motion (eigenmodes with u = 0 on the bolt, forced with amplitude "
+                              "'Drive amplitude'). free: it only pushes (eigenmodes of the free "
+                              "plate, forced with force 'Drive force').");
             prm.declare_entry("Frequency",
                               str(defaults.frequency),
                               Patterns::Double(0.),
@@ -106,7 +113,13 @@ namespace Chladni
             prm.declare_entry("Drive amplitude",
                               str(defaults.drive_amplitude),
                               Patterns::Double(0.),
-                              "Vertical amplitude A with which the bolt is shaken [m].");
+                              "Vertical amplitude A with which the bolt is shaken [m]. Used "
+                              "if 'Center support = clamped'.");
+            prm.declare_entry("Drive force",
+                              str(defaults.drive_force),
+                              Patterns::Double(0.),
+                              "Vertical force amplitude F with which the bolt is pushed [N]. "
+                              "Used if 'Center support = free'.");
             prm.declare_entry("Sweep min frequency",
                               str(defaults.sweep_min_frequency),
                               Patterns::Double(0.),
@@ -168,9 +181,13 @@ namespace Chladni
             else
                 mode = Mode::sweep;
 
+            center_support = (prm.get("Center support") == "free") ? CenterSupport::free :
+                                                                         CenterSupport::clamped;
+
             frequency            = prm.get_double("Frequency");
             number_of_eigenmodes = prm.get_integer("Number of eigenmodes");
             drive_amplitude      = prm.get_double("Drive amplitude");
+            drive_force          = prm.get_double("Drive force");
             sweep_min_frequency  = prm.get_double("Sweep min frequency");
             sweep_max_frequency  = prm.get_double("Sweep max frequency");
             sweep_steps          = prm.get_integer("Sweep steps");
@@ -221,6 +238,17 @@ namespace Chladni
                 return "forced";
             case Mode::sweep:
                 return "sweep";
+        }
+        return "";
+    }
+
+    std::string to_string(const CenterSupport center_support)
+    {
+        switch (center_support) {
+            case CenterSupport::clamped:
+                return "clamped";
+            case CenterSupport::free:
+                return "free";
         }
         return "";
     }

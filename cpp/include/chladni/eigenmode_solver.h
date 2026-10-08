@@ -10,7 +10,7 @@ namespace Chladni
 {
     using namespace dealii;
 
-    /** A free vibration of the plate with the bolt held fixed. */
+    /** A free vibration of the plate (no shaker force acts). */
     struct Eigenmode
     {
         double         frequency;    // f = omega / (2 pi) [Hz]
@@ -18,9 +18,13 @@ namespace Chladni
     };
 
     /**
-     * Computes vibration modes of the plate clamped at the bolt (u = 0 there):
+     * Computes vibration modes of the plate,
      *
-     *   K u = omega^2 M u.
+     *   K u = omega^2 M u,
+     *
+     * either clamped at the bolt (u = 0 there) or completely free, depending on the parameter
+     * 'Center support'. The free plate also has 6 rigid body motions (omega = 0). They are not
+     * vibrations and are left out.
      *
      * We are interested in the modes near a chosen frequency f, not only in the lowest ones.
      * SLEPc's shift-and-invert transformation does exactly that: with the shift
@@ -30,6 +34,10 @@ namespace Chladni
     class EigenmodeSolver
     {
     public:
+        /** Modes below this frequency [Hz] count as rigid body motions. No elastic mode of a
+         * real Chladni plate is that slow. */
+        static constexpr double rigid_body_frequency = 1.;
+
         explicit EigenmodeSolver(const Plate &plate);
 
         /** The @p n_modes eigenmodes closest to @p target_frequency [Hz], sorted by frequency. */

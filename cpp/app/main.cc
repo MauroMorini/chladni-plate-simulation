@@ -27,7 +27,8 @@ namespace
     void run_eigenmodes(const Parameters &parameters, const Plate &plate)
     {
         std::cout << "Computing " << parameters.number_of_eigenmodes
-                  << " eigenmodes closest to " << parameters.frequency << " Hz ..." << std::endl;
+                  << " eigenmodes closest to " << parameters.frequency << " Hz ("
+                  << to_string(parameters.center_support) << " center) ..." << std::endl;
 
         const EigenmodeSolver eigenmode_solver(plate);
         const auto modes = eigenmode_solver.solve(parameters.frequency,
@@ -48,9 +49,10 @@ namespace
 
     void run_forced(const Parameters &parameters, const Plate &plate)
     {
-        std::cout << "Shaking the bolt at " << parameters.frequency << " Hz ..." << std::endl;
+        std::cout << "Shaking the bolt at " << parameters.frequency << " Hz ("
+                  << to_string(parameters.center_support) << " center) ..." << std::endl;
 
-        const ForcedResponseSolver forced_solver(plate, parameters.drive_amplitude);
+        const ForcedResponseSolver forced_solver(plate);
         const auto displacement = forced_solver.solve(parameters.frequency);
 
         const std::string basename =
@@ -58,7 +60,8 @@ namespace
         write_vtu(plate, displacement, basename + ".vtu");
         write_top_surface_csv(plate, displacement, basename + "_top.csv");
 
-        std::cout << "  response amplitude G = RMS(u_z) / A = "
+        const bool clamped = parameters.center_support == CenterSupport::clamped;
+        std::cout << "  response amplitude G = RMS(u_z) / " << (clamped ? "A = " : "F [m/N] = ")
                   << forced_solver.response_amplitude(displacement) << "  -> " << basename
                   << ".vtu / _top.csv" << std::endl;
     }
@@ -69,7 +72,7 @@ namespace
                   << parameters.sweep_min_frequency << " Hz to " << parameters.sweep_max_frequency
                   << " Hz ..." << std::endl;
 
-        const ForcedResponseSolver forced_solver(plate, parameters.drive_amplitude);
+        const ForcedResponseSolver forced_solver(plate);
         const auto curve = forced_solver.sweep(parameters.sweep_min_frequency,
                                                parameters.sweep_max_frequency,
                                                parameters.sweep_steps);

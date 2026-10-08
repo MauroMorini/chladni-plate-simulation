@@ -9,10 +9,16 @@
 
 namespace Chladni
 {
-    ForcedResponseSolver::ForcedResponseSolver(const Plate &plate, const double drive_amplitude)
+    ForcedResponseSolver::ForcedResponseSolver(const Plate &plate)
         : plate(plate)
-        , drive_amplitude(drive_amplitude)
     {}
+
+    double ForcedResponseSolver::drive_magnitude() const
+    {
+        const Parameters &parameters = plate.get_parameters();
+        return (parameters.center_support == CenterSupport::clamped) ? parameters.drive_amplitude :
+                                                                       parameters.drive_force;
+    }
 
     Vector<double> ForcedResponseSolver::solve(const double frequency) const
     {
@@ -27,17 +33,39 @@ namespace Chladni
         Vector<double>     displacement(n_dofs);
         Vector<double>     right_hand_side(n_dofs);
 
-        // Prescribe the motion of the bolt: vertical amplitude A, no horizontal motion.
-        std::map<types::global_dof_index, double> bolt_values;
-        for (const auto dof : plate.get_bolt_dofs())
-            bolt_values[dof] = plate.get_z_dofs().is_element(dof) ? drive_amplitude : 0.;
+        if (plate.get_parameters().center_support == CenterSupport::clamped) {
+            // Prescribe the motion of the bolt: vertical amplitude A, no horizontal motion.
+            std::map<types::global_dof_index, double> bolt_values;
+            for (const auto dof : plate.get_bolt_dofs())
+                bolt_values[dof] = plate.get_z_dofs().is_element(dof) ? drive_magnitude() : 0.;
 
-        MatrixTools::apply_boundary_values(bolt_values,
-                                           system_matrix,
-                                           displacement,
-                                           right_hand_side);
+            MatrixTools::apply_boundary_values(bolt_values,
+                                               system_matrix,
+                                               displacement,
+                                               right_hand_side);
+        }
+        else {
+            // Push the bolt upwards with the total force F. Each vertical bolt DoF gets a share
+            // proportional to the mass it carries, (M 1_z)_i, as if a uniform force density
+            // acted on the bolt material. The rest of the plate is free.
+            Vector<double> unit_vertical_motion(n_dofs);
+            for (const auto dof : plate.get_z_dofs())
+                unit_vertical_motion[dof] = 1.;
+            Vector<double> nodal_mass(n_dofs);
+            plate.get_mass_matrix().vmult(nodal_mass, unit_vertical_motion);
+
+            double bolt_mass = 0.;
+            for (const auto dof : plate.get_bolt_dofs())
+                if (plate.get_z_dofs().is_element(dof))
+                    bolt_mass += nodal_mass[dof];
+
+            for (const auto dof : plate.get_bolt_dofs())
+                if (plate.get_z_dofs().is_element(dof))
+                    right_hand_side[dof] = drive_magnitude() * nodal_mass[dof] / bolt_mass;
+        }
 
         // The matrix is indefinite (above the first eigenfrequency), so we use a direct solver.
+        // For the free plate it is singular at f = 0 (rigid body motions), so f must be > 0.
         SparseDirectUMFPACK direct_solver;
         direct_solver.initialize(system_matrix);
         direct_solver.vmult(displacement, right_hand_side);
@@ -63,7 +91,7 @@ namespace Chladni
         const double mean_square = mass_matrix.matrix_norm_square(vertical_displacement) /
                                    mass_matrix.matrix_norm_square(unit_vertical_motion);
 
-        return std::sqrt(mean_square) / drive_amplitude;
+        return std::sqrt(mean_square) / drive_magnitude();
     }
 
     std::vector<SweepPoint> ForcedResponseSolver::sweep(const double       f_min,

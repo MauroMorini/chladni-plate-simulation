@@ -1,7 +1,13 @@
 import numpy as np
 import pytest
 
-from chladni_viz.io import load_top_surface, relative_field, title_from_filename
+from chladni_viz.io import (
+    frequency_from_filename,
+    load_top_surface,
+    relative_field,
+    sorted_by_frequency,
+    title_from_filename,
+)
 
 COORDINATES = [-1.0, 0.0, 1.0]
 
@@ -73,3 +79,18 @@ def test_relative_stress_clips_a_single_peak(tmp_path):
 )
 def test_title_from_filename(filename, title):
     assert title_from_filename(filename) == title
+
+
+def test_frequency_from_filename():
+    assert frequency_from_filename("out/mode_03_506.1Hz_top.csv") == 506.1
+    assert frequency_from_filename("something.csv") is None
+
+
+def test_sorted_by_frequency_handles_more_than_99_modes():
+    files = ["mode_100_2000.0Hz_top.csv", "mode_11_300.0Hz_top.csv", "other.csv", "mode_02_50.0Hz_top.csv"]
+    assert sorted_by_frequency(files) == [
+        "mode_02_50.0Hz_top.csv",
+        "mode_11_300.0Hz_top.csv",
+        "mode_100_2000.0Hz_top.csv",
+        "other.csv",
+    ]

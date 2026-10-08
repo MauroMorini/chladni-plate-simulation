@@ -1,0 +1,37 @@
+# Lowest 60 eigenmodes of the FREE plate (force-driven center). Run from cpp/build:
+#   ./chladni ../parameters/eigenmodes_free.prm
+# and plot the first 24 into a PDF (from python/):
+#   uv run chladni-plot ../cpp/build/output/eigenmodes_free/mode_*_top.csv --align-pairs --first 24 \
+#       --save ../cpp/build/output/first24_free.pdf
+subsection Geometry
+  set Side length = 0.24      # edge length L of the square plate [m]
+  set Thickness   = 0.001     # plate thickness h [m]
+  set Bolt radius = 0.005     # radius of the central bolt [m]
+end
+
+subsection Material           # aluminium
+  set Young's modulus = 70e9  # [Pa]
+  set Poisson ratio   = 0.33  # [-]
+  set Density         = 2700  # [kg/m^3]
+end
+
+subsection Discretization
+  set Cells per side          = 32  # must be even
+  set Cells through thickness = 1
+  set Polynomial degree       = 2   # >= 2 recommended (degree 1 locks for thin plates)
+end
+
+subsection Simulation
+  set Mode                 = eigenmodes  # eigenmodes | forced | sweep
+  set Center support       = free        # clamped | free
+  set Frequency            = 0           # target (eigenmodes) or drive (forced) frequency [Hz]
+  set Number of eigenmodes = 60
+  set Drive amplitude      = 1e-6        # vertical amplitude of the shaken bolt [m]
+  set Sweep min frequency  = 10          # [Hz]
+  set Sweep max frequency  = 1000        # [Hz]
+  set Sweep steps          = 200
+end
+
+subsection Output
+  set Output directory = output/eigenmodes_free
+end

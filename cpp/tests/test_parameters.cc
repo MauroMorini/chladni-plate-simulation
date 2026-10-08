@@ -15,14 +15,19 @@ int main()
           set Poisson ratio   = 0.25
         end
         subsection Simulation
-          set Mode      = sweep
-          set Frequency = 123.5
+          set Mode           = sweep
+          set Frequency      = 123.5
+          set Center support = free
+          set Drive force    = 0.5
         end
     )");
 
     check_relative(parameters.youngs_modulus, 1., 1e-14, "Young's modulus is read");
     check_relative(parameters.frequency, 123.5, 1e-14, "frequency is read");
     check(parameters.mode == Mode::sweep, "mode is read");
+    check(parameters.center_support == CenterSupport::free, "center support is read");
+    check(Parameters().center_support == CenterSupport::clamped, "center support defaults to clamped");
+    check_relative(parameters.drive_force, 0.5, 1e-14, "drive force is read");
     check_relative(parameters.density, Parameters().density, 1e-14, "density keeps its default");
 
     // E = 1, nu = 1/4:  lambda = 0.25 / (1.25 * 0.5) = 0.4,  mu = 1 / 2.5 = 0.4
