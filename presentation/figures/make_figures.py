@@ -1,14 +1,15 @@
 """Create the figures for the slides (slides.typ).
 
 Most figures are small 1D toy computations done right here with numpy. The Chladni figures come
-from the deal.II simulation, run with cpp/parameters/eigenmodes.prm. Its results are read from
-cpp/build/output/eigenmodes/.
+from the deal.II simulation of the free plate, run with cpp/parameters/eigenmodes_free.prm. Its
+results are read from cpp/build/output/eigenmodes_free/.
 
 Run from the presentation/ folder:
-    (cd ../cpp/build && ./chladni ../parameters/eigenmodes.prm)
+    (cd ../cpp/build && ./chladni ../parameters/eigenmodes_free.prm)
     uv run --project ../python python figures/make_figures.py
 """
 
+import dataclasses
 from pathlib import Path
 
 import matplotlib
@@ -17,8 +18,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from chladni_viz.io import load_top_surface
-from chladni_viz.view3d import draw_plate, surface_colors
+from chladni_viz.io import load_top_surface, sorted_by_frequency, frequency_from_filename
+from chladni_viz.plot_pattern import align_pairs
+from chladni_viz.view3d import surface_colors
 
 HERE = Path(__file__).parent
 SIMULATION = HERE.parent.parent / "cpp" / "build" / "output"
@@ -169,6 +171,33 @@ def partial_derivatives():
     save(fig, "partial_derivatives.svg")
 
 
+def space_time():
+    """u(x, t) as a map over the (x, t) plane: a row is a photo, a column is one point over time."""
+    x = np.linspace(0, 1, 300)
+    t = np.linspace(0, 4, 400)
+    t0, x0 = 0.25, 0.3
+    values = string_shape(x[None, :], t[:, None])
+
+    colormap = matplotlib.colors.LinearSegmentedColormap.from_list("uni", [BLUE, "white", RED])
+    fig, ax = plt.subplots(figsize=(6.5, 4.2))
+    image = ax.imshow(values, extent=[0, 1, 0, 4], origin="lower", aspect="auto", cmap=colormap, vmin=-1.1, vmax=1.1)
+    ax.axhline(t0, color=DARK, lw=2.5)
+    ax.axvline(x0, color=DARK, lw=2.5, ls="--")
+    ax.plot([x0], [t0], "o", color=DARK, ms=8)
+    ax.text(0.98, t0 + 0.12, r"Foto ($t = t_0$ fest): $\partial u / \partial x$", ha="right", fontsize=13,
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.85, pad=2))
+    ax.text(x0 + 0.02, 3.75, r"Punkt ($x = x_0$ fest): $\partial u / \partial t$", fontsize=13,
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.85, pad=2))
+    ax.set_xlabel("Ort $x$")
+    ax.set_ylabel("Zeit $t$")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    colorbar = fig.colorbar(image, ax=ax, ticks=[-1, 0, 1], shrink=0.8)
+    colorbar.ax.set_yticklabels(["unten", "0", "oben"])
+    colorbar.set_label("Auslenkung $u$")
+    save(fig, "space_time.svg")
+
+
 def wave_equation_forces():
     """Acceleration of each piece of string is proportional to the curvature u_xx."""
     x = np.linspace(0, 1, 400)
@@ -225,50 +254,34 @@ def discretization():
 
 def secants():
     """Difference quotients approach the derivative as h gets smaller."""
-    x = np.linspace(0, 4, 400)
-    u = lambda x: 0.3 + 0.25 * x**2 - 0.03 * x**3
-    du = lambda x: 0.5 * x - 0.09 * x**2
-    x0 = 1.0
+    x = np.linspace(-0.2, 3.3, 400)
+    u = lambda x: 0.3 + 0.4 * x**2
+    du = lambda x: 0.8 * x
+    x0 = 0.5
 
-    fig, ax = plt.subplots(figsize=(7, 3.8))
+    fig, ax = plt.subplots(figsize=(7, 4.2))
     ax.plot(x, u(x), color=DARK)
-    for h, alpha in [(2.0, 0.35), (1.0, 0.6), (0.4, 0.85)]:
+    for h, alpha in [(2.5, 0.35), (1.5, 0.55), (0.75, 0.75), (0.25, 0.95)]:
         slope = (u(x0 + h) - u(x0)) / h
-        line_x = np.array([x0 - 0.6, x0 + h + 0.4])
+        line_x = np.array([x0 - 0.5, x0 + h + 0.3])
         ax.plot(line_x, u(x0) + slope * (line_x - x0), color=BLUE, lw=1.5, alpha=alpha)
         ax.plot([x0 + h], [u(x0 + h)], "o", color=BLUE, alpha=alpha, ms=6)
-        ax.text(x0 + h + 0.05, u(x0 + h) - 0.22, f"$h = {h:g}$", color=BLUE, fontsize=11)
-    line_x = np.array([x0 - 0.6, x0 + 2.4])
+        if h > 1:
+            ax.text(x0 + h + 0.1, u(x0 + h) - 0.15, f"$h = {h:g}$", color=BLUE, fontsize=12, alpha=max(alpha, 0.7))
+    line_x = np.array([x0 - 0.5, x0 + 2.8])
     ax.plot(line_x, u(x0) + du(x0) * (line_x - x0), color=RED, lw=2)
     ax.plot([x0], [u(x0)], "o", color=RED, ms=8)
-    ax.text(2.6, 0.95, "Tangente", color=RED)
+    ax.text(x0 + 2.85, u(x0) + du(x0) * 2.8, "Tangente", color=RED, va="center")
+    # the slopes approach u'(x0) = 0.4
+    table = "\n".join(f"$h = {h:<4g}$:  Steigung {(u(x0 + h) - u(x0)) / h:.2f}" for h in [2.5, 1.5, 0.75, 0.25, 0.01])
+    ax.text(0.02, 0.97, table, transform=ax.transAxes, va="top", color=BLUE, fontsize=12)
+    ax.text(0.02, 0.53, f"Tangente:  Steigung {du(x0):.2f}", transform=ax.transAxes, va="top", color=RED, fontsize=12)
     ax.set_xticks([x0], ["$x$"])
     ax.set_yticks([])
-    ax.set_ylim(0, 2.3)
+    ax.set_xlim(-0.3, 4.1)
+    ax.set_ylim(0, 5)
     save(fig, "secants.svg")
 
-
-def stencil():
-    """u_{i-1} - 2 u_i + u_{i+1} compares u_i with the average of its neighbours."""
-    xs = np.array([0, 1, 2])
-    us = np.array([0.6, 1.6, 1.0])
-    mean = (us[0] + us[2]) / 2
-
-    fig, ax = plt.subplots(figsize=(6, 3.4))
-    ax.plot(xs, us, color=GRAY, lw=1, ls="--")
-    ax.plot([xs[0], xs[2]], [us[0], us[2]], color=BLUE, lw=1.2)
-    ax.plot(xs, us, "o", color=DARK, ms=11)
-    ax.plot([1], [mean], "o", color=BLUE, ms=9)
-    ax.annotate("", xy=(1, mean + 0.05), xytext=(1, us[1] - 0.06), arrowprops=dict(arrowstyle="-|>", color=RED, lw=2.5))
-    for x, u, label, dx in zip(xs, us, ["$u_{i-1}$", "$u_i$", "$u_{i+1}$"], [-0.12, 0, 0.12]):
-        ax.text(x + dx, u + 0.12, label, ha="center", fontsize=16)
-    ax.text(1.08, mean - 0.17, "Mittelwert der Nachbarn", color=BLUE, fontsize=12)
-    ax.text(1.08, (us[1] + mean) / 2, "Zug zurück", color=RED, fontsize=12, va="center")
-    ax.set_xlim(-0.4, 2.6)
-    ax.set_ylim(0.2, 2.0)
-    ax.set_xticks(xs, ["$x_i - h$", "$x_i$", "$x_i + h$"])
-    ax.set_yticks([])
-    save(fig, "stencil.svg")
 
 
 def leapfrog(n_cells, length, c, dt, n_steps, initial, left_boundary=None):
@@ -293,26 +306,6 @@ def leapfrog(n_cells, length, c, dt, n_steps, initial, left_boundary=None):
         history.append(current.copy())
     return x, np.array(history)
 
-
-def plucked_string():
-    """Snapshots of a plucked string, computed with the finite difference scheme."""
-    pluck = lambda x: np.where(x < 0.3, x / 0.3, (1 - x) / 0.7)
-    dt = 0.0025
-    x, history = leapfrog(200, 1.0, 1.0, dt, 800, pluck)
-
-    times = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
-    fig, axes = plt.subplots(len(times), 1, figsize=(6.5, 6.5), sharex=True, gridspec_kw=dict(hspace=0.05))
-    for ax, time in zip(axes, times):
-        ax.plot(x, history[round(time / dt)], color=DARK, lw=2)
-        ax.axhline(0, color=GRAY, lw=0.6)
-        ax.set_ylim(-1.1, 1.1)
-        ax.set_yticks([])
-        ax.spines["left"].set_visible(False)
-        ax.spines["bottom"].set_visible(False)
-        ax.text(-0.03, 0, f"$t = {time:g}$", ha="right", va="center", fontsize=12)
-    axes[-1].set_xticks([])
-    axes[-1].set_xlabel("Ort $x$")
-    save(fig, "plucked_string.svg")
 
 
 def refinement():
@@ -437,9 +430,48 @@ def eigen_product():
 
 
 def mode_files():
-    """All eigenmode *_top.csv files with their frequency, sorted by frequency."""
-    files = sorted((SIMULATION / "eigenmodes").glob("mode_*_top.csv"))
-    return [(float(f.name.split("_")[2].removesuffix("Hz")), f) for f in files]
+    """All eigenmode *_top.csv files of the free plate with their frequency, sorted by frequency."""
+    files = sorted_by_frequency((SIMULATION / "eigenmodes_free").glob("mode_*_top.csv"))
+    return [(frequency_from_filename(f), f) for f in files]
+
+
+def aligned_surfaces():
+    """(frequency, surface) of all modes; pairs with equal frequency are turned into the parallel
+    line patterns seen on the real plate (as chladni-plot --align-pairs does)."""
+    modes = mode_files()
+    frequencies = [frequency for frequency, _ in modes]
+    surfaces = [load_top_surface(filename) for _, filename in modes]
+    align_pairs(surfaces, frequencies)
+    return list(zip(frequencies, surfaces))
+
+
+def closest_mode(modes, target):
+    return min(modes, key=lambda mode: abs(mode[0] - target))
+
+
+def quadratic_interpolation(n_nodes, per_cell):
+    """Matrix that evaluates the piecewise quadratic finite element function (FE_Q(2): three nodes
+    per cell) given by its n_nodes values on per_cell points per cell.
+
+    The *_top.csv files contain exactly these nodal values (65 x 65 for 32 cells). Showing them as
+    an image directly gives the pixelated look; this evaluates the actual solution in between."""
+    rows = []
+    for cell in range((n_nodes - 1) // 2):
+        for s in np.arange(per_cell) / per_cell:
+            row = np.zeros(n_nodes)
+            row[2 * cell : 2 * cell + 3] = [2 * (s - 0.5) * (s - 1), -4 * s * (s - 1), 2 * s * (s - 0.5)]
+            rows.append(row)
+    row = np.zeros(n_nodes)
+    row[-1] = 1
+    return np.array(rows + [row])
+
+
+def refine(surface, per_cell=16):
+    """The surface on a grid with per_cell points per cell instead of 2."""
+    rows = quadratic_interpolation(surface.uz.shape[0], per_cell)
+    columns = quadratic_interpolation(surface.uz.shape[1], per_cell)
+    fine = lambda values: rows @ values @ columns.T
+    return dataclasses.replace(surface, x=fine(surface.x), y=fine(surface.y), uz=fine(surface.uz), von_mises=None)
 
 
 def sand(surface, width=0.06):
@@ -449,45 +481,55 @@ def sand(surface, width=0.06):
 
 
 def draw_sand(ax, surface):
-    ax.imshow(sand(surface), cmap="gray", origin="lower", vmin=0, vmax=1, interpolation="bilinear")
+    ax.imshow(sand(refine(surface)), cmap="gray", origin="lower", vmin=0, vmax=1, interpolation="antialiased")
     ax.set_xticks([])
     ax.set_yticks([])
     for spine in ax.spines.values():
         spine.set_visible(False)
 
 
-def chladni_gallery(frequencies, name, columns=4):
+def save_png(fig, name):
+    fig.savefig(HERE / name, dpi=250, bbox_inches="tight", transparent=False, facecolor="white")
+    plt.close(fig)
+    print(f"saved figures/{name}")
+
+
+def chladni_gallery(frequencies, name, columns=4, title=True):
     """Sand patterns of the eigenmodes closest to the given frequencies."""
-    modes = mode_files()
+    modes = aligned_surfaces()
     rows = int(np.ceil(len(frequencies) / columns))
     fig, axes = plt.subplots(rows, columns, figsize=(2.6 * columns, 2.9 * rows), layout="constrained", squeeze=False)
     for ax, target in zip(axes.flat, frequencies):
-        frequency, filename = min(modes, key=lambda mode: abs(mode[0] - target))
-        draw_sand(ax, load_top_surface(filename))
-        ax.set_title(f"{frequency:.0f} Hz", fontsize=14)
+        frequency, surface = closest_mode(modes, target)
+        draw_sand(ax, surface)
+        if title:
+            ax.set_title(f"{frequency:.0f} Hz", fontsize=15)
     for ax in axes.flat[len(frequencies):]:
         ax.axis("off")
-    save(fig, name)
+    save_png(fig, name)
 
 
-def plate_3d_and_sand(target=506.1):
+def plate_3d_and_sand(target=529.0):
     """One eigenmode: vibrating plate in 3D next to the sand pattern."""
-    frequency, filename = min(mode_files(), key=lambda mode: abs(mode[0] - target))
-    surface = load_top_surface(filename)
+    frequency, surface = closest_mode(aligned_surfaces(), target)
+    fine = refine(surface, per_cell=4)
 
     fig = plt.figure(figsize=(11, 4.6))
     ax3d = fig.add_subplot(1, 2, 1, projection="3d")
-    side = surface.x.max() - surface.x.min()
-    draw_plate(ax3d, surface, surface_colors(surface, "uz"), 0.15 * side / np.abs(surface.uz).max())
+    side = fine.x.max() - fine.x.min()
+    height = 0.15 * side / np.abs(fine.uz).max() * fine.uz
+    ax3d.plot_surface(fine.x, fine.y, height, facecolors=surface_colors(fine, "uz"), rstride=1, cstride=1,
+                      linewidth=0, antialiased=True, shade=False)
+    ax3d.set_zlim(1.2 * height.min(), 1.2 * height.max())
+    ax3d.set_box_aspect((1, 1, 0.35), zoom=1.3)
+    ax3d.set_axis_off()
     ax3d.view_init(elev=30, azim=-60)
     ax3d.set_title("rot = nach oben, blau = nach unten", fontsize=13)
 
     ax2d = fig.add_subplot(1, 2, 2)
     draw_sand(ax2d, surface)
     ax2d.set_title("Sand sammelt sich auf den Knotenlinien", fontsize=13)
-    fig.savefig(HERE / "plate_3d_and_sand.png", dpi=200, bbox_inches="tight", transparent=False, facecolor="white")
-    plt.close(fig)
-    print("saved figures/plate_3d_and_sand.png")
+    save_png(fig, "plate_3d_and_sand.png")
 
 
 if __name__ == "__main__":
@@ -495,15 +537,15 @@ if __name__ == "__main__":
     derivative_motion()
     curvature()
     partial_derivatives()
+    space_time()
     wave_equation_forces()
     discretization()
     secants()
-    stencil()
-    plucked_string()
     refinement()
     fem_guitar()
     standing_waves()
     eigen_product()
-    chladni_gallery([50, 202, 391, 506, 623, 877, 1020, 1253], "chladni_gallery.svg")
-    chladni_gallery([391], "chladni_single.svg", columns=1)
+    chladni_gallery([82.9, 105.1, 293.8, 529.0, 722.8, 924.8, 1281.6, 2010.1], "chladni_gallery.png")
+    # the mode that matches the photo images/sand_pattern_photo.png (four loops and a cross)
+    chladni_gallery([924.8], "chladni_single.png", columns=1)
     plate_3d_and_sand()

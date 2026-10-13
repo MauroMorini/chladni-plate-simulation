@@ -43,6 +43,8 @@
 #let caption(body) = text(size: 11pt, fill: dark.lighten(25%), body)
 #let photo(path, label, ..args) = figure(image(path, ..args), caption: caption(label), supplement: none, numbering: none, gap: 0.4em)
 #let boxed(body, fill: mint.lighten(60%)) = box(fill: fill, inset: 0.7em, radius: 6pt, body)
+// Knopf, der eine Animation aus animations/ im Browser öffnet
+#let animation(path, label) = link(path, box(fill: red, inset: (x: 0.6em, y: 0.35em), radius: 4pt, text(fill: white, size: 13pt)[▶ #label]))
 #let step(body) = box(fill: mint.lighten(50%), stroke: dark + 1pt, inset: 0.6em, radius: 6pt, width: 100%, align(center, body))
 
 #title-slide()
@@ -134,8 +136,15 @@ Ein Ball wird senkrecht nach oben geworfen:
 
 #align(center, image("figures/derivative_motion.svg", height: 5.4cm))
 
-- 1. Ableitung der Höhe = *Geschwindigkeit*
-- 2. Ableitung der Höhe = *Beschleunigung*
+#grid(
+  columns: (1fr, auto),
+  align: horizon,
+  [
+    - 1. Ableitung der Höhe = *Geschwindigkeit*
+    - 2. Ableitung der Höhe = *Beschleunigung*
+  ],
+  animation("animations/ball.html")[Animation: fliegender Ball],
+)
 
 == Die zweite Ableitung: Krümmung
 
@@ -152,26 +161,38 @@ Ein Ball wird senkrecht nach oben geworfen:
 
 == Partielle Ableitungen
 
-Bei $u(x, t)$ können wir nach $t$ *oder* nach $x$ ableiten. Die andere Variable bleibt dabei fest:
+#slide(composer: (0.9fr, 1.2fr))[
+  #set text(size: 15pt)
+  #image("figures/space_time.svg", width: 100%)
+  #align(center, animation("animations/raumzeit.html")[Animation: Raum-Zeit-Bild])
+][
+  #set text(size: 15pt)
+  $u(x, t)$ ist eine *Landschaft* über der $(x, t)$-Ebene (Farbe = Auslenkung).
 
-#v(0.5em)
-#grid(
-  columns: (1fr, 1fr),
-  gutter: 1.5em,
-  boxed[
-    *Nach der Zeit* (Ort $x$ fest):
-    $ (partial^2 u) / (partial t^2) $
-    #sym.arrow *Beschleunigung* eines Stücks der Saite
-  ],
-  boxed[
-    *Nach dem Ort* (Zeit $t$ fest):
-    $ (partial^2 u) / (partial x^2) $
-    #sym.arrow *Krümmung* der Saite auf dem Foto
-  ],
-)
+  #v(0.2em)
+  - Eine *waagrechte Linie* ist ein Foto der Saite: Zeit $t_0$ fest, nur $x$ ändert sich.
+  - Eine *senkrechte Linie* ist ein Punkt $x_0$ im Lauf der Zeit: nur $t$ ändert sich.
 
-#v(0.5em)
-Das Symbol $partial$ ("d rund") heisst: Ableitung nach einer Variablen, die anderen bleiben fest.
+  #v(0.2em)
+  Entlang einer solchen Linie ist $u$ wieder eine ganz normale Funktion *einer* Variablen, und die können wir wie gewohnt ableiten:
+
+  #v(0.2em)
+  #table(
+    columns: (auto, auto, auto),
+    stroke: none,
+    inset: 0.4em,
+    align: horizon,
+    fill: (_, row) => if row == 0 { mint } else { mint.lighten(70%) },
+    [], [*Nach der Zeit* ($x$ fest)], [*Nach dem Ort* ($t$ fest)],
+    [1.], [$partial u \/ partial t$ = Geschwindigkeit], [$partial u \/ partial x$ = Steigung],
+    [2.], [$partial^2 u \/ partial t^2$ = *Beschleunigung*], [$partial^2 u \/ partial x^2$ = *Krümmung*],
+  )
+
+  #v(0.2em)
+  Das Symbol $partial$ ("d rund") heisst: Ableitung nach einer Variablen, die anderen bleiben fest.
+]
+
+#speaker-note[In der Animation kann man x_0 und t_0 verschieben: Die Tangente im Foto hat die Steigung du/dx, die Tangente in der Zeitkurve die Steigung du/dt (Geschwindigkeit des Punktes).]
 
 == Die Wellengleichung
 
@@ -284,68 +305,7 @@ Ein Computer kann nur *endlich viele* Zahlen speichern. Wir merken uns die Saite
   $ u'(x) approx (u(x + h) - u(x)) / h $
 
   #v(0.3em)
-  Je kleiner $h$, desto näher liegt die Sekante (blau) an der Tangente (rot).
-]
-
-== Die zweite Ableitung als Differenz
-
-#slide(composer: (1fr, 1.1fr))[
-  #image("figures/stencil.svg", width: 100%)
-][
-  Zweimal Differenzen bilden ergibt:
-
-  $ u''(x_i) approx (u_(i-1) - 2 u_i + u_(i+1)) / h^2 $
-
-  #v(0.3em)
-  Umgeformt:
-  $ u''(x_i) approx 2 / h^2 dot (#text(fill: blue)[Mittelwert der Nachbarn] - u_i) $
-
-  Liegt ein Punkt *höher* als seine Nachbarn, ist $u'' < 0$ und er wird *nach unten* gezogen.
-]
-
-== Das Rechenrezept
-
-Dasselbe machen wir in der Zeit (Zeitschritt $Delta t$). Für jeden Punkt $i$ und jeden Zeitschritt:
-
-#align(center)[
-  #boxed[
-    $ u_i^"neu" = underbrace(2 u_i^"jetzt" - u_i^"vorher", "einfach weiterfliegen") + underbrace(((c Delta t) / h)^2 (u_(i-1)^"jetzt" - 2 u_i^"jetzt" + u_(i+1)^"jetzt"), "Zug der Nachbarn") $
-  ]
-]
-
-#grid(
-  columns: (1.3fr, 1fr),
-  gutter: 1em,
-  [
-    ```python
-    k = (c * dt / h)**2
-    for n in range(anzahl_zeitschritte):
-        for i in range(1, N):
-            zug = jetzt[i-1] - 2*jetzt[i] + jetzt[i+1]
-            neu[i] = 2*jetzt[i] - vorher[i] + k*zug
-        vorher, jetzt = jetzt, neu
-    ```
-  ],
-  align(horizon)[
-    Nur Plus, Minus und Mal! \
-    Ein Computer schafft *Milliarden* solcher Rechnungen pro Sekunde.
-  ],
-)
-
-== Simulation: die gezupfte Saite
-
-#slide(composer: (1.2fr, 1fr))[
-  #image("figures/plucked_string.svg", height: 9.5cm)
-][
-  Start: Die Saite wird bei $x = 0.3$ gezupft und losgelassen.
-
-  #v(0.5em)
-  - Die "Ecke" teilt sich in zwei Wellen, die nach links und rechts laufen.
-  - An den Enden werden sie *reflektiert* (kopfüber).
-  - Nach $t = 2$ ist die Saite wieder in der Startform.
-
-  #v(0.5em)
-  Berechnet mit genau dem Rezept von vorher (201 Punkte).
+  Je kleiner $h$, desto näher liegt die Sekante (blau) an der Tangente (rot). Die Steigungen (oben links) nähern sich dem exakten Wert $u'(x) = 0.40$.
 ]
 
 == Wie fein muss das Gitter sein?
@@ -392,19 +352,6 @@ Eine Saite der Länge 10, die links im Takt hin und her bewegt wird. Gitterabsta
   #photo("images/car_mesh.png", [FEM-Gitter eines Autos])
 ]
 
-== Unsere Simulation der Chladni-Platte
-
-#slide(composer: (1fr, 1fr))[
-  - *Platte:* Aluminium, 24 cm × 24 cm, 1 mm dick
-  - in der Mitte auf einer *Schraube* befestigt, die vom Lautsprecher geschüttelt wird
-  - gerechnet in *3D* mit der Bibliothek *deal.II* (C++)
-  - 32 × 32 Elemente, *38'025 Unbekannte*
-  - die 40 tiefsten Eigenschwingungen: ca. 10 Sekunden auf einem Laptop
-][
-  #image("figures/plate_3d_and_sand.png", width: 100%)
-  #speaker-note[Was eine Eigenschwingung ist, erklären wir gleich. Hier nur: Das Programm sagt uns Frequenzen und Muster voraus.]
-]
-
 = Chladni-Figuren
 
 == Ernst Florens Friedrich Chladni (1756--1827)
@@ -433,6 +380,9 @@ Eine Saite der Länge 10, die links im Takt hin und her bewegt wird. Gitterabsta
 
   #v(0.3em)
   Darum klingt eine Gitarre nach einem bestimmten Ton und nicht nach Rauschen.
+
+  #v(0.3em)
+  #animation("animations/stehende_welle.html")[Animation: stehende Welle]
 ]
 
 == Eigenschwingungen (Eigenfunktionen)
@@ -449,6 +399,8 @@ Eine Saite der Länge 10, die links im Takt hin und her bewegt wird. Gitterabsta
     *«Eigen»*: Jede Saite und jede Platte hat ihre *eigenen* Formen und Frequenzen, wie ein Fingerabdruck. Sie hängen von Form, Material und Befestigung ab.
   ],
 )
+
+#align(center, animation("animations/raumzeit.html?modus=eigen")[Animation: Eigenschwingung im Raum-Zeit-Bild])
 
 == Warum nur bestimmte Frequenzen?
 
@@ -503,7 +455,7 @@ Setzen wir $u(x, t) = phi(x) cos(2 pi f t)$ in die Wellengleichung ein:
 
 == Simulierte Chladni-Figuren
 
-#align(center)[#image("figures/chladni_gallery.svg", height: 8.4cm)]
+#align(center)[#image("figures/chladni_gallery.png", height: 8.4cm)]
 
 #align(center)[Höhere Frequenz → mehr Knotenlinien → feineres Muster]
 
@@ -512,21 +464,7 @@ Setzen wir $u(x, t) = phi(x) cos(2 pi f t)$ in die Wellengleichung ein:
 #slide(composer: (1fr, 1fr))[
   #photo("images/sand_pattern_photo.png", [Experiment], height: 7cm)
 ][
-  #photo("figures/chladni_single.svg", [Simulation], height: 7cm)
-]
-
-== Ein mathematisches Rätsel mit Folgen
-
-#slide(composer: (2fr, 1fr))[
-  - *1809:* Napoleon setzt einen Preis aus: Wer kann die Chladni-Figuren mathematisch erklären?
-  - *1816:* *Sophie Germain* gewinnt mit dem ersten richtigen Ansatz, als erste Frau überhaupt bei der Pariser Akademie.
-  - *1850:* *Gustav Kirchhoff* löst das Problem für die runde Platte.
-  - *1909:* Der Schweizer *Walther Ritz* (aus Sitten) berechnet die quadratische Platte mit einer neuen Methode.
-
-  #v(0.5em)
-  #boxed[Die Methode von Ritz ist der Grundstein der *Finite-Elemente-Methode*, mit der wir heute rechnen.]
-][
-  #photo("images/ritz.png", [Walther Ritz (1878--1909)], height: 7.5cm)
+  #photo("figures/chladni_single.png", [Simulation: Eigenschwingung bei 925 Hz], height: 7cm)
 ]
 
 == Jetzt sind Sie dran!
