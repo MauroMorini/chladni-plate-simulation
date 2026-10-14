@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Baut die Website nach _site/ (wird von .github/workflows/pages.yml aufgerufen).
 # Animationen und Folien werden aus presentation/ kopiert, damit sie nur einmal im Repo liegen.
-# Die Folien werden nicht neu kompiliert: vor dem Pushen lokal `typst compile slides.typ` laufen lassen.
+# Folien und Arbeitsblatt werden nicht neu kompiliert: vor dem Pushen lokal `typst compile` laufen lassen.
 # Lokale Vorschau:  bash site/build.sh && python3 -m http.server -d _site 8000
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -14,6 +14,7 @@ mkdir -p _site/simulationen _site/spiel
 cp presentation/animations/*.html _site/simulationen/
 cp game/index.html game/*.js _site/spiel/
 cp presentation/slides.pdf _site/wellen-und-chladni-figuren.pdf
+cp presentation/arbeitsblatt.pdf _site/arbeitsblatt.pdf
 cp presentation/figures/chladni_gallery.png _site/
 cp presentation/images/chladni_portrait.png presentation/images/chladni_figures_historic.png _site/
 
