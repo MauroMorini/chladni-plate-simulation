@@ -1,24 +1,24 @@
 <!doctype html>
-<html lang="en">
+<!-- Chladni-Spiel von inversecrime, übernommen aus https://github.com/inversecrime/chladni (docs/, Commit 833e955).
+     Angepasst: deutsche Beschriftung, Kopfzeile und Farben der Website. site/build.sh kopiert diesen Ordner nach spiel/. -->
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chladni Plate</title>
+<title>Chladni-Spiel – Wellen &amp; Chladni-Figuren</title>
+<link rel="stylesheet" href="../style.css">
 <style>
   :root {
-    --bg: #f4f4f6; --panel: #ffffff; --text: #1d1d22; --muted: #6a6a75; --line: #d8d8e0;
-    --accent: #2563eb; --accent-text: #ffffff;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #14141a; --panel: #1e1e26; --text: #ececf2; --muted: #9a9aa8; --line: #34343f; --accent: #5b8def; --accent-text: #0b0b10; }
+    --bg: #f4f7f7; --panel: #ffffff; --text: #2D373C; --muted: #6b777c; --line: #d3dcdc;
+    --accent: #D20537; --accent-text: #ffffff;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
-    font: 15px/1.4 system-ui, sans-serif;
+  main.game {
+    max-width: none;
+    font-size: 15px; line-height: 1.4;
     display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; align-items: flex-start; justify-content: center;
   }
-  #stage { position: relative; width: min(92vw, calc(100vh - 32px), 700px); aspect-ratio: 1; }
+  #stage { position: relative; width: min(92vw, calc(100vh - 100px), 700px); aspect-ratio: 1; }
   canvas { width: 100%; height: 100%; display: block; background: #000; border-radius: 6px; image-rendering: pixelated; }
   #busy {
     position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
@@ -46,30 +46,41 @@
 </style>
 </head>
 <body>
+<header>
+  <nav>
+    <a href="../">Wellen &amp; Chladni-Figuren</a>
+    <a href="../simulationen.html">Simulationen</a>
+    <a href="../wellen-und-chladni-figuren.pdf" download>Folien</a>
+    <a href="./" aria-current="page">Spiel</a>
+  </nav>
+</header>
+<main class="game">
 <div id="stage">
   <canvas id="canvas" width="700" height="700"></canvas>
-  <div id="busy">Computing plate modes…</div>
+  <div id="busy">Berechne die Eigenschwingungen der Platte …</div>
 </div>
 <aside>
-  <h1>Chladni plate</h1>
-  <label for="mu">Mu (μ)</label>
+  <h1>Chladni-Platte</h1>
+  <label for="mu">Material: Querkontraktionszahl μ</label>
   <div class="row">
     <input id="mu" type="number" min="0.01" max="0.99" step="0.01" value="0.5">
     <input id="muSlider" type="range" min="0.01" max="0.99" step="0.01" value="0.5">
   </div>
-  <label for="frequency">Frequency</label>
+  <label for="frequency">Frequenz</label>
   <div class="row"><input id="frequency" type="number" step="0.01" disabled></div>
   <div class="row" style="margin-top:6px"><input id="frequencySlider" type="range" step="0.01" disabled></div>
-  <label for="particles">Particles per throw</label>
+  <label for="particles">Sandkörner pro Wurf</label>
   <div class="row"><input id="particles" type="number" min="0" max="10000" step="10" value="100"></div>
   <div class="buttons">
-    <button id="throw" class="primary">Throw particles</button>
-    <button id="keep" aria-pressed="false">Keep throwing</button>
-    <button id="clear">Clear</button>
+    <button id="throw" class="primary">Sand streuen</button>
+    <button id="keep" aria-pressed="false">Dauernd streuen</button>
+    <button id="clear">Platte leeren</button>
   </div>
-  <div id="info">starting…</div>
-  <div id="hint">Sweep the frequency: when it matches a resonance of the plate, the sand collects on the nodal lines.</div>
+  <div id="info">startet …</div>
+  <div id="hint">Verändert langsam die Frequenz: Trifft sie eine Eigenfrequenz der Platte, sammelt sich der Sand auf den Knotenlinien.</div>
 </aside>
+</main>
+<footer>Spiel von <a href="https://github.com/inversecrime/chladni">inversecrime</a>, nach Gander &amp; Kwok, <em>Chladni Figures and the Tacoma Bridge</em></footer>
 
 <script src="solver.js"></script>
 <script src="simulation.js"></script>
@@ -148,8 +159,8 @@
     sim.draw(image.data, canvas.width, canvas.height);
     ctx.putImageData(image, 0, 0);
     if (dt > 0) fps = fps * 0.9 + (1000 / dt) * 0.1;
-    $("info").textContent = "FPS " + Math.round(fps) + "  ·  particles " + sim.nParticles +
-      (sim.frequency === null ? "" : "  ·  mode solve " + ($("info").dataset.solveMs || "?") + " ms");
+    $("info").textContent = "FPS " + Math.round(fps) + "  ·  Sandkörner " + sim.nParticles +
+      (sim.frequency === null ? "" : "  ·  Berechnung " + ($("info").dataset.solveMs || "?") + " ms");
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

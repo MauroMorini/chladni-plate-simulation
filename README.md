@@ -11,7 +11,8 @@ cpp/parameters/   all parameter files (.prm)
 cpp/build/        the only place where the C++ code is built and run; results go to cpp/build/output/
 python/           Python package (uv, numpy + matplotlib): turns the results into pictures
 presentation/     slides; they take their simulation results and plots from cpp/build/output/
-site/             public website (slides PDF, animations, later a game), see below
+site/             public website (slides PDF, animations, game), see below
+game/             Chladni game in the browser (plain JavaScript), from github.com/inversecrime/chladni
 ```
 
 ## Quick start: the first N Chladni figures as a PDF
@@ -228,8 +229,8 @@ left out keep their default.
 ## Website (`site/`)
 
 A static website (German) for the audience of the talk: the HTML animations from
-`presentation/animations/`, the slides as a PDF download and, later, a small Chladni game in
-`site/spiel/` (plain JavaScript, no build step). It is hosted on GitHub Pages at
+`presentation/animations/`, the slides as a PDF download and the Chladni game from `game/` (plain
+JavaScript, no build step; served under `spiel/`). It is hosted on GitHub Pages at
 <https://mauromorini.github.io/chladni-plate-simulation/>: the workflow
 `.github/workflows/pages.yml` builds and deploys it on every push to `main` (or manually from the
 Actions tab). Other branches are not deployed; preview them locally:
@@ -239,8 +240,7 @@ bash site/build.sh                         # assembles the site into _site/ (ign
 python3 -m http.server -d _site 8000       # local preview at http://localhost:8000
 ```
 
-`build.sh` only copies files: the animations, `presentation/slides.pdf` and the Chladni gallery
-picture. The slides are **not** compiled in CI (no Typst, no Inter font there), so run
+`build.sh` only copies files: the animations, the game, `presentation/slides.pdf` and the pictures. The slides are **not** compiled in CI (no Typst, no Inter font there), so run
 `typst compile slides.typ` in `presentation/` and commit `slides.pdf` before pushing slide changes.
 
 One-time setup: the repository must be public (GitHub Pages is not free for private repositories)
