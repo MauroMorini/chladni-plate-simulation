@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!-- Folie "Ableitungen und Bewegung": Ein Ball wird senkrecht nach oben geworfen.
+     Links der Ball mit Geschwindigkeits- (blau) und Beschleunigungspfeil (rot), rechts die Kurven
+     h(t), h'(t), h''(t), die mitlaufen. Die Tangente an h(t) hat die Steigung h'(t).
+     Tasten: Leertaste = Pause/Weiter, R = von vorne, T = Tangente ein/aus. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Ableitungen und Bewegung</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; color: #2D373C; font-family: Inter, system-ui, sans-serif; }
+  #bar { display: flex; gap: 1.5em; align-items: center; padding: 0.5em 1em; background: #2D373C; color: #fff; font-size: 18px; }
+  #bar label { display: flex; gap: 0.4em; align-items: center; }
+  button { font: inherit; padding: 0.2em 0.8em; border: 0; border-radius: 4px; background: #D20537; color: #fff; cursor: pointer; }
+  canvas { display: block; width: 100%; height: calc(100% - 48px); }
+</style>
+</head>
+<body>
+<div id="bar">
+  <button id="play">Pause</button>
+  <button id="restart">Von vorne</button>
+  <label>Zeitlupe <input id="speed" type="range" min="0.1" max="1" step="0.05" value="0.4"></label>
+  <label><input id="tangent" type="checkbox" checked> Tangente an h(t)</label>
+</div>
+<canvas id="c"></canvas>
+<script>
+const DARK = "#2D373C", MINT = "#A5D7D2", RED = "#D20537", BLUE = "#1F6F8B", GRAY = "#9AA5AA";
+const g = 9.81, v0 = 9.81, T = 2 * v0 / g;  // Flugzeit 2 s, maximale Höhe 4.9 m
+const height = t => v0 * t - g * t * t / 2;
+const velocity = t => v0 - g * t;
+
+const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
+let t = 0, playing = true, last = null, pauseAtEnd = 0;
+
+function resize() {
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * ratio;
+  canvas.height = canvas.clientHeight * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+window.addEventListener("resize", resize);
+
+function arrow(x0, y0, x1, y1, color, width) {
+  const len = Math.hypot(x1 - x0, y1 - y0);
+  if (len < 2) return;
+  const head = Math.min(16, len * 0.6), angle = Math.atan2(y1 - y0, x1 - x0);
+  ctx.strokeStyle = ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(x0, y0);
+  ctx.lineTo(x1 - head * 0.8 * Math.cos(angle), y1 - head * 0.8 * Math.sin(angle)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 - head * Math.cos(angle - 0.4), y1 - head * Math.sin(angle - 0.4));
+  ctx.lineTo(x1 - head * Math.cos(angle + 0.4), y1 - head * Math.sin(angle + 0.4));
+  ctx.closePath(); ctx.fill();
+}
+
+// Ein Diagramm: f über [0, T], gezeichnet bis zur aktuellen Zeit t
+function plot(box, f, yMin, yMax, color, title, unit, tangent) {
+  const { x, y, w, h } = box;
+  const px = s => x + (s / T) * w, py = v => y + h - ((v - yMin) / (yMax - yMin)) * h;
+  ctx.strokeStyle = GRAY; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x, py(0)); ctx.lineTo(x + w, py(0)); ctx.stroke();
+  ctx.strokeStyle = DARK;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.stroke();
+  ctx.fillStyle = DARK; ctx.font = "17px Inter, sans-serif"; ctx.textAlign = "left";
+  ctx.fillText(title, x + 8, y + 4);
+  ctx.font = "13px Inter, sans-serif"; ctx.textAlign = "right";
+  ctx.fillText(unit, x - 6, y + 12);
+  // ganze Kurve blass, bisheriger Teil kräftig
+  for (const [end, alpha, lw] of [[T, 0.15, 2], [t, 1, 3]]) {
+    ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = lw;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const s = (end * i) / 200;
+      i ? ctx.lineTo(px(s), py(f(s))) : ctx.moveTo(px(s), py(f(s)));
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  if (tangent) {
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y - 10, w, h + 20); ctx.clip();
+    const slope = velocity(t), dt = 0.35;
+    ctx.strokeStyle = BLUE; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(px(t - dt), py(f(t) - slope * dt)); ctx.lineTo(px(t + dt), py(f(t) + slope * dt)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = BLUE; ctx.font = "14px Inter, sans-serif"; ctx.textAlign = "left";
+    ctx.fillText(`Steigung = ${slope.toFixed(1)} m/s`, px(t) + 10, py(f(t)) + (slope > 0 ? 22 : -14));
+    ctx.restore();
+  }
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(px(t), py(f(t)), 6, 0, 2 * Math.PI); ctx.fill();
+}
+
+function draw() {
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+  ctx.textBaseline = "middle";
+
+  // links: der Ball
+  const left = { x: 40, w: Math.min(0.32 * W, 360) };
+  const ground = H - 50, top = 60, scale = (ground - top) / 5.2;
+  const ballX = left.x + left.w / 2, ballY = ground - height(t) * scale - 18;
+  ctx.fillStyle = MINT; ctx.fillRect(left.x, ground, left.w, 8);
+  // Höhenskala
+  ctx.strokeStyle = GRAY; ctx.fillStyle = GRAY; ctx.lineWidth = 1; ctx.font = "13px Inter, sans-serif"; ctx.textAlign = "right";
+  for (let m = 0; m <= 5; m++) {
+    const y = ground - m * scale;
+    ctx.beginPath(); ctx.moveTo(left.x + 20, y); ctx.lineTo(left.x + 30, y); ctx.stroke();
+    ctx.fillText(`${m} m`, left.x + 16, y);
+  }
+  ctx.fillStyle = DARK;
+  ctx.beginPath(); ctx.arc(ballX, ballY, 18, 0, 2 * Math.PI); ctx.fill();
+  const arrowScale = scale * 0.3;  // 1 m/s bzw. 1 m/s² -> Pixel
+  arrow(ballX - 30, ballY, ballX - 30, ballY - velocity(t) * arrowScale, BLUE, 5);
+  // Beschleunigung: zeigt von oben auf den Ball, damit der Pfeil nie im Boden verschwindet
+  arrow(ballX + 30, ballY - g * arrowScale, ballX + 30, ballY, RED, 5);
+  ctx.font = "16px Inter, sans-serif"; ctx.textAlign = "right"; ctx.fillStyle = BLUE;
+  ctx.fillText(`v = ${velocity(t).toFixed(1)} m/s`, ballX - 42, ballY - velocity(t) * arrowScale / 2);
+  ctx.textAlign = "left"; ctx.fillStyle = RED;
+  ctx.fillText(`a = −9.8 m/s²`, ballX + 42, ballY - g * arrowScale / 2);
+  ctx.fillStyle = DARK; ctx.textAlign = "center"; ctx.font = "18px Inter, sans-serif";
+  ctx.fillText(`t = ${t.toFixed(2)} s`, ballX, 28);
+
+  // rechts: die drei Diagramme
+  const x = left.x + left.w + 90, w = W - x - 40, gap = 46, h = (H - 40 - 3 * gap) / 3;
+  const tangent = document.getElementById("tangent").checked;
+  plot({ x, y: gap, w, h }, height, -0.5, 5.5, DARK, "Höhe  h(t)", "m", tangent);
+  plot({ x, y: 2 * gap + h, w, h }, velocity, -11, 11, BLUE, "Geschwindigkeit  h′(t)", "m/s", false);
+  plot({ x, y: 3 * gap + 2 * h, w, h }, () => -g, -11, 11, RED, "Beschleunigung  h″(t)", "m/s²", false);
+  ctx.fillStyle = DARK; ctx.font = "13px Inter, sans-serif"; ctx.textAlign = "right";
+  ctx.fillText("Zeit t [s] →", x + w, H - 12);
+}
+
+function frame(now) {
+  if (last !== null && playing) {
+    const dt = ((now - last) / 1000) * parseFloat(document.getElementById("speed").value);
+    if (t < T) t = Math.min(T, t + dt);
+    else if ((pauseAtEnd += dt) > 1.0) { t = 0; pauseAtEnd = 0; }
+  }
+  last = now;
+  draw();
+  requestAnimationFrame(frame);
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById("play").textContent = playing ? "Pause" : "Weiter";
+}
+document.getElementById("play").onclick = togglePlay;
+document.getElementById("restart").onclick = () => { t = 0; pauseAtEnd = 0; };
+window.addEventListener("keydown", e => {
+  if (e.key === " ") { togglePlay(); e.preventDefault(); }
+  if (e.key === "r" || e.key === "R") { t = 0; pauseAtEnd = 0; }
+  if (e.key === "t" || e.key === "T") document.getElementById("tangent").click();
+  if (e.key === "ArrowRight") t = Math.min(T, t + 0.05);
+  if (e.key === "ArrowLeft") t = Math.max(0, t - 0.05);
+});
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

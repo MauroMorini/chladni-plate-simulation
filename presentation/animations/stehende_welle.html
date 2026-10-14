@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!-- Folie "Stehende Wellen auf einer Saite": u(x, t) = sin(n π x / L) cos(2π f_n t), f_n = n f_1.
+     Der Regler n wählt die Eigenschwingung. Mit "auch Zwischenwerte" sieht man, warum n eine ganze
+     Zahl sein muss: sonst ist die Saite am rechten Ende nicht null, sie wäre dort nicht eingespannt.
+     Tasten: Pfeil hoch/runter = n ändern, Leertaste = Pause/Weiter. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Stehende Welle</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; color: #2D373C; font-family: Inter, system-ui, sans-serif; }
+  #bar { display: flex; gap: 1.5em; align-items: center; padding: 0.5em 1em; background: #2D373C; color: #fff; font-size: 18px; }
+  #bar label { display: flex; gap: 0.4em; align-items: center; }
+  #n { width: 260px; }
+  #nValue { font-weight: bold; min-width: 3.5em; display: inline-block; }
+  button { font: inherit; padding: 0.2em 0.8em; border: 0; border-radius: 4px; background: #D20537; color: #fff; cursor: pointer; }
+  canvas { display: block; width: 100%; height: calc(100% - 48px); }
+</style>
+</head>
+<body>
+<div id="bar">
+  <label>n = <span id="nValue">1</span> <input id="n" type="range" min="1" max="8" step="1" value="1"></label>
+  <label><input id="continuous" type="checkbox"> auch Zwischenwerte erlauben</label>
+  <label>Tempo <input id="speed" type="range" min="0.05" max="1" step="0.05" value="0.3"></label>
+  <button id="play">Pause</button>
+</div>
+<canvas id="c"></canvas>
+<script>
+const DARK = "#2D373C", MINT = "#A5D7D2", RED = "#D20537", BLUE = "#1F6F8B", GRAY = "#9AA5AA";
+const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
+const slider = document.getElementById("n"), continuous = document.getElementById("continuous");
+let phase = 0, playing = true, last = null;
+
+function resize() {
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * ratio;
+  canvas.height = canvas.clientHeight * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+window.addEventListener("resize", resize);
+
+const n = () => parseFloat(slider.value);
+const isInteger = () => Math.abs(n() - Math.round(n())) < 1e-9;
+
+function updateLabel() {
+  document.getElementById("nValue").textContent = isInteger() ? n().toFixed(0) : n().toFixed(2);
+}
+continuous.onchange = () => {
+  slider.step = continuous.checked ? "0.01" : "1";
+  if (!continuous.checked) slider.value = Math.round(n());
+  updateLabel();
+};
+slider.oninput = updateLabel;
+
+function draw() {
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+  const x0 = 110, x1 = W - 110, mid = H * 0.48, amp = Math.min(H * 0.28, 220);
+  const px = s => x0 + s * (x1 - x0);  // s = x / L in [0, 1]
+  const k = n() * Math.PI;              // Wellenzahl mal L
+  const shape = s => Math.sin(k * s);
+
+  // Ruhelage und Einspannungen
+  ctx.strokeStyle = GRAY; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(x0 - 60, mid); ctx.lineTo(x1 + 60, mid); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = DARK;
+  for (const x of [x0, x1]) ctx.fillRect(x - 6, mid - amp - 30, 12, 2 * amp + 60);
+
+  // Hüllkurve: die Form, die die Saite nie verlässt
+  ctx.strokeStyle = MINT; ctx.lineWidth = 2;
+  for (const sign of [1, -1]) {
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const s = i / 400;
+      i ? ctx.lineTo(px(s), mid - sign * amp * shape(s)) : ctx.moveTo(px(s), mid - sign * amp * shape(s));
+    }
+    ctx.stroke();
+  }
+
+  // die Saite selbst
+  const c = Math.cos(phase);
+  ctx.strokeStyle = BLUE; ctx.lineWidth = 4;
+  ctx.beginPath();
+  for (let i = 0; i <= 600; i++) {
+    const s = i / 600, y = mid - amp * shape(s) * c;
+    i ? ctx.lineTo(px(s), y) : ctx.moveTo(px(s), y);
+  }
+  ctx.stroke();
+
+  // Knoten: sin(n π x / L) = 0  <=>  x / L = m / n
+  ctx.fillStyle = RED;
+  for (let m = 0; m <= n() + 1e-9; m++) {
+    ctx.beginPath(); ctx.arc(px(m / n()), mid, 8, 0, 2 * Math.PI); ctx.fill();
+  }
+
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = DARK;
+  ctx.font = "15px Inter, sans-serif";
+  ctx.fillText("x = 0", x0, mid + amp + 50);
+  ctx.fillText("x = L", x1, mid + amp + 50);
+
+  ctx.font = "22px Inter, sans-serif";
+  if (isInteger()) {
+    const nn = Math.round(n());
+    ctx.fillText(`Frequenz f = ${nn} · f₁      Knoten: ${nn + 1}      Wellenlänge λ = 2L / ${nn}`, W / 2, 40);
+  } else {
+    // Die Saite trifft das rechte Ende nicht: dort müsste sie fest sein
+    const end = mid - amp * shape(1) * c;
+    ctx.strokeStyle = RED; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x1, end, 14, 0, 2 * Math.PI); ctx.stroke();
+    ctx.fillStyle = RED;
+    ctx.fillText(`sin(${n().toFixed(2)} · π) = ${shape(1).toFixed(2)} ≠ 0: die Saite wäre am rechten Ende nicht eingespannt!`, W / 2, 40);
+  }
+}
+
+function frame(now) {
+  if (last !== null && playing) {
+    // Grundton 1 Umdrehung pro Sekunde (mal Tempo), Oberton n schwingt n-mal so schnell
+    phase += 2 * Math.PI * n() * ((now - last) / 1000) * parseFloat(document.getElementById("speed").value);
+  }
+  last = now;
+  draw();
+  requestAnimationFrame(frame);
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById("play").textContent = playing ? "Pause" : "Weiter";
+}
+document.getElementById("play").onclick = togglePlay;
+window.addEventListener("keydown", e => {
+  const step = continuous.checked ? 0.05 : 1;
+  if (e.key === " ") { togglePlay(); e.preventDefault(); }
+  if (e.key === "ArrowUp" || e.key === "ArrowRight") { slider.value = Math.min(8, n() + step); updateLabel(); e.preventDefault(); }
+  if (e.key === "ArrowDown" || e.key === "ArrowLeft") { slider.value = Math.max(1, n() - step); updateLabel(); e.preventDefault(); }
+});
+resize();
+updateLabel();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

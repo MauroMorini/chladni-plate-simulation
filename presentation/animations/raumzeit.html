@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<!-- Folien "Partielle Ableitungen" und "Eigenschwingungen": u(x, t) als Raum-Zeit-Bild.
+     Links die Landschaft u(x, t) (Farbe = Auslenkung, x nach rechts, t nach oben). Die waagrechte
+     Linie ist das aktuelle Foto der Saite (oben rechts, Tangente = ∂u/∂x), die senkrechte Linie ein
+     fester Punkt x₀ im Lauf der Zeit (unten rechts, Tangente = ∂u/∂t).
+     Klick ins Raum-Zeit-Bild setzt x₀ (und t). raumzeit.html?modus=eigen startet mit einer
+     Eigenschwingung. Tasten: Leertaste = Pause/Weiter, Pfeil links/rechts = x₀ verschieben. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Raum-Zeit-Bild einer Saite</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; color: #2D373C; font-family: Inter, system-ui, sans-serif; }
+  #bar { display: flex; gap: 1.5em; align-items: center; padding: 0.5em 1em; background: #2D373C; color: #fff; font-size: 18px; }
+  #bar label { display: flex; gap: 0.4em; align-items: center; }
+  select, button { font: inherit; }
+  button { padding: 0.2em 0.8em; border: 0; border-radius: 4px; background: #D20537; color: #fff; cursor: pointer; }
+  canvas { display: block; width: 100%; height: calc(100% - 48px); }
+</style>
+</head>
+<body>
+<div id="bar">
+  <label>Bewegung
+    <select id="mode">
+      <option value="saite">gezupfte Saite (Überlagerung)</option>
+      <option value="eigen">Eigenschwingung</option>
+    </select>
+  </label>
+  <label id="nLabel">n = <span id="nValue">2</span> <input id="n" type="range" min="1" max="6" step="1" value="2"></label>
+  <label>Tempo <input id="speed" type="range" min="0.05" max="1" step="0.05" value="0.25"></label>
+  <button id="play">Pause</button>
+</div>
+<canvas id="c"></canvas>
+<script>
+const DARK = "#2D373C", MINT = "#A5D7D2", RED = "#D20537", BLUE = "#1F6F8B", GRAY = "#9AA5AA";
+const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
+const modeSelect = document.getElementById("mode"), nSlider = document.getElementById("n");
+const T = 4;  // gezeigtes Zeitfenster [0, T]
+let t = 0, x0 = 0.3, playing = true, last = null, heatmap = null, layout = null;
+
+if (new URLSearchParams(location.search).get("modus") === "eigen") modeSelect.value = "eigen";
+
+// u(x, t) auf [0, 1] mit c = 1, beide Enden fest
+function u(x, t) {
+  if (modeSelect.value === "eigen") {
+    const n = parseInt(nSlider.value);
+    return Math.sin(n * Math.PI * x) * Math.cos(n * Math.PI * t);
+  }
+  return 0.8 * Math.sin(Math.PI * x) * Math.cos(Math.PI * t) + 0.3 * Math.sin(3 * Math.PI * x) * Math.cos(3 * Math.PI * t + 0.6);
+}
+const dudx = (x, t) => (u(x + 1e-4, t) - u(x - 1e-4, t)) / 2e-4;
+const dudt = (x, t) => (u(x, t + 1e-4) - u(x, t - 1e-4)) / 2e-4;
+
+// Farbe: blau (unten) - weiss - rot (oben)
+function color(v) {
+  const s = Math.max(-1, Math.min(1, v / 1.1));
+  const [r, g, b] = s > 0 ? [210, 5, 55] : [31, 111, 139];
+  const a = Math.abs(s);
+  return [255 + (r - 255) * a, 255 + (g - 255) * a, 255 + (b - 255) * a];
+}
+
+function resize() {
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * ratio;
+  canvas.height = canvas.clientHeight * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  const size = Math.min(W * 0.45, H - 110);
+  layout = {
+    map: { x: 70, y: 40, w: size, h: size },
+    photo: { x: size + 170, y: 50, w: W - size - 220, h: (H - 150) / 2 },
+    trace: { x: size + 170, y: 100 + (H - 150) / 2, w: W - size - 220, h: (H - 150) / 2 },
+  };
+  buildHeatmap();
+}
+window.addEventListener("resize", resize);
+
+function buildHeatmap() {
+  const { w, h } = layout.map, cols = Math.max(2, Math.round(w)), rows = Math.max(2, Math.round(h));
+  heatmap = document.createElement("canvas");
+  heatmap.width = cols; heatmap.height = rows;
+  const hctx = heatmap.getContext("2d"), image = hctx.createImageData(cols, rows);
+  for (let j = 0; j < rows; j++) {
+    const time = T * (1 - j / (rows - 1));  // Zeit läuft nach oben
+    for (let i = 0; i < cols; i++) {
+      const [r, g, b] = color(u(i / (cols - 1), time)), k = 4 * (j * cols + i);
+      image.data[k] = r; image.data[k + 1] = g; image.data[k + 2] = b; image.data[k + 3] = 255;
+    }
+  }
+  hctx.putImageData(image, 0, 0);
+}
+
+function curve(box, f, sMax, sEnd, stroke, lw) {
+  ctx.strokeStyle = stroke; ctx.lineWidth = lw;
+  ctx.beginPath();
+  for (let i = 0; i <= 300; i++) {
+    const s = (sEnd * i) / 300, X = box.x + (s / sMax) * box.w, Y = box.y + box.h / 2 - f(s) * box.h * 0.4;
+    i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+  }
+  ctx.stroke();
+}
+
+function tangent(box, s, value, slope, sMax, stroke, label) {
+  const X = s => box.x + (s / sMax) * box.w, Y = v => box.y + box.h / 2 - v * box.h * 0.4;
+  const ds = 0.12 * sMax;
+  ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+  ctx.strokeStyle = stroke; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(X(s - ds), Y(value - slope * ds)); ctx.lineTo(X(s + ds), Y(value + slope * ds)); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = DARK;
+  ctx.beginPath(); ctx.arc(X(s), Y(value), 7, 0, 2 * Math.PI); ctx.fill();
+  ctx.fillStyle = stroke; ctx.font = "18px Inter, sans-serif"; ctx.textAlign = "left";
+  ctx.textAlign = "right";
+  ctx.fillText(`${label} = ${slope.toFixed(2)}`, box.x + box.w, box.y + 14);
+}
+
+function axes(box, title, xlabel) {
+  ctx.strokeStyle = GRAY; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(box.x, box.y + box.h / 2); ctx.lineTo(box.x + box.w, box.y + box.h / 2); ctx.stroke();
+  ctx.strokeStyle = DARK;
+  ctx.beginPath(); ctx.moveTo(box.x, box.y); ctx.lineTo(box.x, box.y + box.h); ctx.stroke();
+  ctx.fillStyle = DARK; ctx.font = "18px Inter, sans-serif"; ctx.textAlign = "left";
+  ctx.fillText(title, box.x, box.y - 16);
+  ctx.font = "14px Inter, sans-serif"; ctx.textAlign = "right";
+  ctx.fillText(xlabel, box.x + box.w, box.y + box.h + 16);
+}
+
+function draw() {
+  const W = canvas.clientWidth, H = canvas.clientHeight, { map, photo, trace } = layout;
+  ctx.clearRect(0, 0, W, H);
+  ctx.textBaseline = "middle";
+
+  // Raum-Zeit-Bild mit den beiden Schnitten
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(heatmap, map.x, map.y, map.w, map.h);
+  ctx.strokeStyle = DARK; ctx.lineWidth = 1; ctx.strokeRect(map.x, map.y, map.w, map.h);
+  const tY = map.y + map.h * (1 - t / T), xX = map.x + x0 * map.w;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(map.x, tY); ctx.lineTo(map.x + map.w, tY); ctx.stroke();
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath(); ctx.moveTo(xX, map.y); ctx.lineTo(xX, map.y + map.h); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = DARK; ctx.beginPath(); ctx.arc(xX, tY, 7, 0, 2 * Math.PI); ctx.fill();
+  ctx.font = "16px Inter, sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("Ort x →", map.x + map.w / 2, map.y + map.h + 20);
+  ctx.save(); ctx.translate(map.x - 25, map.y + map.h / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText("Zeit t →", 0, 0); ctx.restore();
+  ctx.font = "18px Inter, sans-serif"; ctx.textAlign = "left";
+  ctx.fillText("u(x, t)   (rot = oben, blau = unten)", map.x, map.y - 20);
+  ctx.font = "14px Inter, sans-serif"; ctx.fillStyle = GRAY;
+  ctx.fillText("Klick ins Bild: Punkt x₀ wählen", map.x, map.y + map.h + 46);
+
+  // Foto: t fest, x variiert
+  axes(photo, `Foto der Saite zur Zeit t = ${t.toFixed(2)}   (waagrechte Linie)`, "Ort x");
+  curve(photo, x => u(x, t), 1, 1, DARK, 3.5);
+  tangent(photo, x0, u(x0, t), dudx(x0, t) * 1, 1, RED, "∂u/∂x  (Steigung)");
+
+  // Zeitverlauf: x fest, t variiert
+  axes(trace, `Punkt x₀ = ${x0.toFixed(2)} im Lauf der Zeit   (senkrechte Linie)`, "Zeit t");
+  curve(trace, s => u(x0, s), T, T, MINT, 2);
+  curve(trace, s => u(x0, s), T, t, BLUE, 3.5);
+  tangent(trace, t, u(x0, t), dudt(x0, t), T, BLUE, "∂u/∂t  (Geschwindigkeit)");
+}
+
+function frame(now) {
+  if (last !== null && playing) {
+    t += ((now - last) / 1000) * parseFloat(document.getElementById("speed").value);
+    if (t > T) t -= T;
+  }
+  last = now;
+  draw();
+  requestAnimationFrame(frame);
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById("play").textContent = playing ? "Pause" : "Weiter";
+}
+function updateMode() {
+  document.getElementById("nLabel").style.display = modeSelect.value === "eigen" ? "flex" : "none";
+  document.getElementById("nValue").textContent = nSlider.value;
+  buildHeatmap();
+}
+document.getElementById("play").onclick = togglePlay;
+modeSelect.onchange = updateMode;
+nSlider.oninput = updateMode;
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect(), { map } = layout;
+  const x = (e.clientX - rect.left - map.x) / map.w, y = (e.clientY - rect.top - map.y) / map.h;
+  if (x >= 0 && x <= 1 && y >= 0 && y <= 1) { x0 = x; t = T * (1 - y); }
+});
+window.addEventListener("keydown", e => {
+  if (e.key === " ") { togglePlay(); e.preventDefault(); }
+  if (e.key === "ArrowRight") x0 = Math.min(1, x0 + 0.02);
+  if (e.key === "ArrowLeft") x0 = Math.max(0, x0 - 0.02);
+});
+resize();
+updateMode();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
