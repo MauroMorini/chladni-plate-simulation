@@ -1,0 +1,82 @@
+/* Farben der Universität Basel, wie in presentation/slides.typ */
+:root {
+  --dark: #2D373C;
+  --mint: #A5D7D2;
+  --red: #D20537;
+  --blue: #1F6F8B;
+  --light: #f4f7f7;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--light);
+  color: var(--dark);
+  font-family: Inter, system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+header {
+  background: var(--dark);
+  color: #fff;
+  padding: 1rem 1.5rem;
+}
+header a { color: #fff; text-decoration: none; font-weight: 600; }
+header nav { display: flex; gap: 1.5rem; flex-wrap: wrap; max-width: 60rem; margin: 0 auto; }
+header nav a:first-child { margin-right: auto; }
+header nav a[aria-current="page"] { border-bottom: 2px solid var(--red); }
+
+main { max-width: 60rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+h1 { font-size: 2.2rem; line-height: 1.2; margin: 0 0 0.3rem; }
+h2 { margin-top: 0; }
+.subtitle { font-size: 1.2rem; color: var(--blue); margin: 0 0 1.5rem; }
+
+a { color: var(--blue); }
+
+.hero { width: 100%; height: auto; border-radius: 8px; background: #fff; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.2rem;
+  margin-top: 2rem;
+}
+.card {
+  background: #fff;
+  border-left: 5px solid var(--mint);
+  border-radius: 6px;
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+}
+.card p { flex-grow: 1; }
+
+.button {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--red);
+  color: #fff;
+  text-decoration: none;
+  padding: 0.45rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.button:hover { filter: brightness(1.1); }
+.button.disabled { background: #9AA5AA; pointer-events: none; }
+
+kbd {
+  background: #fff;
+  border: 1px solid #c5cdd0;
+  border-radius: 3px;
+  padding: 0 0.3em;
+  font-size: 0.9em;
+}
+
+footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #6b777c;
+  padding: 1.5rem;
+}

@@ -11,6 +11,7 @@ cpp/parameters/   all parameter files (.prm)
 cpp/build/        the only place where the C++ code is built and run; results go to cpp/build/output/
 python/           Python package (uv, numpy + matplotlib): turns the results into pictures
 presentation/     slides; they take their simulation results and plots from cpp/build/output/
+site/             public website (slides PDF, animations, later a game), see below
 ```
 
 ## Quick start: the first N Chladni figures as a PDF
@@ -223,6 +224,27 @@ left out keep their default.
 | | Sweep min/max frequency | 10 / 1000 | frequency range of the sweep [Hz] |
 | | Sweep steps | 200 | number of frequencies in the sweep |
 | Output | Output directory | output | where results are written, relative to `cpp/build` (where `chladni` is run) |
+
+## Website (`site/`)
+
+A static website (German) for the audience of the talk: the HTML animations from
+`presentation/animations/`, the slides as a PDF download and, later, a small Chladni game in
+`site/spiel/` (plain JavaScript, no build step). It is hosted on GitHub Pages at
+<https://mauromorini.github.io/chladni-plate-simulation/>: the workflow
+`.github/workflows/pages.yml` builds and deploys it on every push to `main` (or manually from the
+Actions tab). Other branches are not deployed; preview them locally:
+
+```bash
+bash site/build.sh                         # assembles the site into _site/ (ignored by git)
+python3 -m http.server -d _site 8000       # local preview at http://localhost:8000
+```
+
+`build.sh` only copies files: the animations, `presentation/slides.pdf` and the Chladni gallery
+picture. The slides are **not** compiled in CI (no Typst, no Inter font there), so run
+`typst compile slides.typ` in `presentation/` and commit `slides.pdf` before pushing slide changes.
+
+One-time setup: the repository must be public (GitHub Pages is not free for private repositories)
+and under Settings → Pages the source must be set to "GitHub Actions".
 
 ## Code structure (`cpp/`)
 
