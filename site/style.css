@@ -35,8 +35,6 @@ h2 { margin-top: 0; }
 
 a { color: var(--blue); }
 
-.hero { width: 100%; height: auto; border-radius: 8px; background: #fff; }
-
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
@@ -79,4 +77,54 @@ footer {
   font-size: 0.9rem;
   color: #6b777c;
   padding: 1.5rem;
+}
+
+/* Startseite */
+header { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+
+.hero { background: var(--dark); color: #fff; }
+.hero-inner {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+.hero h1 { font-size: 2.6rem; }
+.hero .subtitle { color: var(--mint); }
+.hero-buttons { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1.5rem; }
+.button.outline { background: transparent; border: 2px solid var(--mint); color: var(--mint); padding: calc(0.45rem - 2px) calc(1rem - 2px); }
+
+.plate { margin: 0; }
+.plate canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: radial-gradient(circle at 35% 30%, #4a575d, #232b2f);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.plate figcaption { font-size: 0.85rem; color: #b8c2c6; margin-top: 0.6rem; }
+
+.chladni {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: start;
+  margin-top: 3.5rem;
+}
+.chladni img { border-radius: 6px; filter: sepia(0.3); }
+
+.then-now { margin-top: 3rem; }
+.then-now-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; align-items: end; }
+.then-now figure { margin: 0; }
+.then-now img { width: 100%; height: auto; border-radius: 6px; background: #fff; }
+.then-now figcaption { font-size: 0.9rem; color: #6b777c; margin-top: 0.4rem; }
+
+@media (max-width: 45rem) {
+  .hero-inner, .chladni, .then-now-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 2rem; }
+  .plate { max-width: 22rem; }
 }

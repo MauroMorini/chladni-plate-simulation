@@ -6,6 +6,7 @@
 
 #import "@preview/touying:0.6.1": *
 #import themes.metropolis: *
+#import "@preview/tiaoma:0.3.0": qrcode
 
 // Farben der Universität Basel
 #let dark = rgb("#2D373C")
@@ -45,6 +46,10 @@
 #let boxed(body, fill: mint.lighten(60%)) = box(fill: fill, inset: 0.7em, radius: 6pt, body)
 // Knopf, der eine Animation aus animations/ im Browser öffnet
 #let animation(path, label) = link(path, box(fill: red, inset: (x: 0.6em, y: 0.35em), radius: 4pt, text(fill: white, size: 13pt)[▶ #label]))
+// Website mit Simulationen und Folien. Die kurze Adresse (z.B. von tinyurl.com) zeigt auf `website`;
+// solange es keine gibt, wird `website` selbst angezeigt.
+#let website = "https://mauromorini.github.io/chladni-plate-simulation/"
+#let short-url = "tinyurl.com/tecday26"
 #let step(body) = box(fill: mint.lighten(50%), stroke: dark + 1pt, inset: 0.6em, radius: 6pt, width: 100%, align(center, body))
 
 #title-slide()
@@ -58,7 +63,7 @@
   + *Chladni-Figuren* -- warum Sand auf einer schwingenden Platte Muster bildet
 
   #v(1em)
-  Danach: *Sie experimentieren selbst!*
+  Danach: *Ihr experimentiert selbst!*
 ][
   #photo("images/chladni_setup.png", [Chladni-Platte mit Lautsprecher und Frequenzgenerator])
 ]
@@ -431,7 +436,7 @@ Setzen wir $u(x, t) = phi(x) cos(2 pi f t)$ in die Wellengleichung ein:
   - $f$ nahe einer Eigenfrequenz: *Resonanz!* Die Platte schwingt stark, und zwar in der Form dieser Eigenschwingung.
 ][
   #boxed[
-    Wenn Sie am Frequenzknopf drehen, «suchen» Sie die Eigenfrequenzen der Platte.
+    Wenn ihr am Frequenzknopf dreht, «sucht» ihr die Eigenfrequenzen der Platte.
 
     #v(0.3em)
     Bei jeder Resonanz erscheint ein anderes Muster.
@@ -467,12 +472,33 @@ Setzen wir $u(x, t) = phi(x) cos(2 pi f t)$ in die Wellengleichung ein:
   #photo("figures/chladni_single.png", [Simulation: Eigenschwingung bei 925 Hz], height: 7cm)
 ]
 
-== Jetzt sind Sie dran!
+== Alles zum Nachschauen
+
+#let shown-url = if short-url == none { website } else { short-url }
+#slide(composer: (1fr, 1.6fr))[
+  #align(center + horizon, qrcode(website, width: 7cm))
+][
+  #set align(horizon)
+  Die Simulationen und diese Folien findet ihr hier:
+
+  #v(0.4em)
+  #boxed(text(size: if short-url == none { 17pt } else { 26pt }, weight: "bold", link(website, shown-url.trim("https://", at: start))))
+
+  #v(0.6em)
+  - alle Animationen aus dem Vortrag zum Ausprobieren
+  - die Folien als PDF
+  - bald: ein Chladni-Spiel
+
+  #v(0.4em)
+  #caption[QR-Code mit dem Handy scannen oder die Adresse im Browser eintippen.]
+]
+
+== Jetzt seid ihr dran!
 
 #slide(composer: (1.2fr, 1fr))[
-  + Drehen Sie die Frequenz *langsam* hoch. Wann entsteht ein Muster?
-  + Notieren Sie die *Frequenz* und skizzieren Sie das *Muster*.
-  + Vergleichen Sie mit der *Simulation*: Stimmen die Frequenzen? Wenn nicht, woran könnte es liegen?
+  + Dreht die Frequenz *langsam* hoch. Wann entsteht ein Muster?
+  + Notiert die *Frequenz* und skizziert das *Muster*.
+  + Vergleicht mit der *Simulation*: Stimmen die Frequenzen? Wenn nicht, woran könnte es liegen?
   + *Knobelfrage:* Manche simulierten Muster tauchen im Experiment nie auf. Warum?
 
   #v(0.5em)

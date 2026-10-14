@@ -5,6 +5,7 @@ simulation, and Chladni figures, followed by the hands-on experiment with the sp
 
 ```
 slides.typ               the slides (Typst + Touying, downloaded automatically on first compile)
+arbeitsblatt.typ         worksheet for the group work after the talk (typst compile arbeitsblatt.typ)
 figures/make_figures.py  creates all plots in figures/
 animations/              small HTML animations (open in a browser, no internet needed), linked from the slides
 images/                  photos taken from old_presentations/TecDay2025.pdf

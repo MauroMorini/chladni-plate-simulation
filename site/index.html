@@ -6,6 +6,7 @@
 <title>Wellen machen Unsichtbares sichtbar</title>
 <meta name="description" content="Folien, Simulationen und ein Spiel zum Vortrag über die Wellengleichung und Chladni-Figuren.">
 <link rel="stylesheet" href="style.css">
+<script type="module" src="chladni-hero.js"></script>
 </head>
 <body>
 <header>
@@ -16,18 +17,30 @@
     <a href="spiel/">Spiel</a>
   </nav>
 </header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1>Wellen machen Unsichtbares sichtbar</h1>
+      <p class="subtitle">Numerische Analysis der Wellengleichung</p>
+      <p>
+        Hier findest du alles zum Vortrag: wie man Wellen mit Mathematik beschreibt, wie ein Computer
+        die Wellengleichung löst und warum Sand auf einer schwingenden Platte schöne Muster bildet.
+      </p>
+      <p class="hero-buttons">
+        <a class="button" href="simulationen.html">Simulationen</a>
+        <a class="button outline" href="wellen-und-chladni-figuren.pdf" download>Folien als PDF</a>
+      </p>
+    </div>
+    <figure class="plate">
+      <canvas id="plate" aria-label="Animierte Chladni-Platte: Sand sammelt sich auf den Knotenlinien"></canvas>
+      <figcaption>Der Sand wird dort weggeschüttelt, wo die Platte schwingt, und bleibt auf den
+        Knotenlinien liegen.</figcaption>
+    </figure>
+  </div>
+</section>
+
 <main>
-  <h1>Wellen machen Unsichtbares sichtbar</h1>
-  <p class="subtitle">Numerische Analysis der Wellengleichung</p>
-
-  <img class="hero" src="chladni_gallery.png" width="2629" height="1475"
-       alt="Simulierte Chladni-Figuren: Sandmuster auf einer schwingenden quadratischen Platte">
-
-  <p>
-    Hier findest du alles zum Vortrag: wie man Wellen mit Mathematik beschreibt, wie ein Computer
-    die Wellengleichung löst und warum Sand auf einer schwingenden Platte schöne Muster bildet.
-  </p>
-
   <div class="cards">
     <section class="card">
       <h2>Simulationen</h2>
@@ -42,10 +55,43 @@
     </section>
     <section class="card">
       <h2>Chladni-Spiel</h2>
-      <p>Finde die richtige Frequenz, damit der Sand das gesuchte Muster bildet.</p>
-      <a class="button disabled" href="spiel/">Kommt bald</a>
+      <p>Streue Sand auf eine simulierte Platte und finde die Frequenzen, bei denen Muster entstehen.</p>
+      <a class="button" href="spiel/">Spielen</a>
     </section>
   </div>
+
+  <section class="chladni">
+    <img src="chladni_portrait.png" width="236" height="282" alt="Porträt von Ernst Florens Friedrich Chladni">
+    <div>
+      <h2>Wer war Ernst Chladni?</h2>
+      <p>
+        Ernst Florens Friedrich Chladni (1756–1827) war Jurist, Physiker und Musiker. Er streute
+        Sand auf Metallplatten und strich sie mit einem Geigenbogen an. Je nach Ton ordnete sich der
+        Sand zu anderen Mustern: Er hatte die Schwingungen sichtbar gemacht.
+      </p>
+      <p>
+        1787 veröffentlichte er seine Figuren im Buch <em>Entdeckungen über die Theorie des
+        Klanges</em>. 1808 führte er sie Napoleon vor, der einen Preis für die mathematische Erklärung
+        stiftete. Gewonnen hat ihn 1816 die Mathematikerin Sophie Germain.
+      </p>
+    </div>
+  </section>
+
+  <section class="then-now">
+    <h2>Damals und heute</h2>
+    <div class="then-now-grid">
+      <figure>
+        <img src="chladni_figures_historic.png" width="488" height="550" loading="lazy"
+             alt="Chladnis gezeichnete Klangfiguren auf quadratischen Platten">
+        <figcaption>Chladnis eigene Zeichnungen seiner Klangfiguren</figcaption>
+      </figure>
+      <figure>
+        <img src="chladni_gallery.png" width="2629" height="1475" loading="lazy"
+             alt="Simulierte Chladni-Figuren einer quadratischen Platte">
+        <figcaption>Unsere Computersimulation der Platte aus dem Experiment</figcaption>
+      </figure>
+    </div>
+  </section>
 </main>
 <footer>Martin Ramm, Mauro Morini · Departement Mathematik und Informatik, Universität Basel</footer>
 </body>
