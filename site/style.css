@@ -97,6 +97,20 @@ header { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 .hero-buttons { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1.5rem; }
 .button.outline { background: transparent; border: 2px solid var(--mint); color: var(--mint); padding: calc(0.45rem - 2px) calc(1rem - 2px); }
 
+.experiment {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: #fff;
+  border: 2px solid var(--red);
+  border-left-width: 8px;
+  border-radius: 6px;
+  padding: 1.2rem 1.5rem;
+}
+.experiment h2 { margin-bottom: 0.3rem; }
+.experiment p { margin: 0; }
+.experiment .button { flex-shrink: 0; align-self: center; font-size: 1.05rem; padding: 0.7rem 1.3rem; }
+
 .plate { margin: 0; }
 .plate canvas {
   display: block;
@@ -125,6 +139,8 @@ header { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 
 @media (max-width: 45rem) {
   .hero-inner, .chladni, .then-now-grid { grid-template-columns: 1fr; }
+  .experiment { flex-direction: column; align-items: flex-start; }
+  .experiment .button { align-self: flex-start; }
   .hero h1 { font-size: 2rem; }
   .plate { max-width: 22rem; }
 }
