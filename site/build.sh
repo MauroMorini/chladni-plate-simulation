@@ -14,5 +14,6 @@ mkdir -p _site/simulationen
 cp presentation/animations/*.html _site/simulationen/
 cp presentation/slides.pdf _site/wellen-und-chladni-figuren.pdf
 cp presentation/figures/chladni_gallery.png _site/
+cp presentation/images/chladni_portrait.png presentation/images/chladni_figures_historic.png _site/
 
 echo "Website gebaut in _site/"
