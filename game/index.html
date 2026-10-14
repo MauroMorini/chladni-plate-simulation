@@ -38,8 +38,7 @@
     padding: 8px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg);
     color: var(--text); font: inherit; cursor: pointer;
   }
-  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  button[aria-pressed=true] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button:active, button[aria-pressed=true] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
   .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
   #info { margin-top: 16px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
   #hint { margin-top: 10px; font-size: 12px; color: var(--muted); }
@@ -61,7 +60,7 @@
 </div>
 <aside>
   <h1>Chladni-Platte</h1>
-  <label for="mu">Material: Querkontraktionszahl μ</label>
+  <label for="mu">Materialparameter μ</label>
   <div class="row">
     <input id="mu" type="number" min="0.01" max="0.99" step="0.01" value="0.5">
     <input id="muSlider" type="range" min="0.01" max="0.99" step="0.01" value="0.5">
@@ -72,15 +71,15 @@
   <label for="particles">Sandkörner pro Wurf</label>
   <div class="row"><input id="particles" type="number" min="0" max="10000" step="10" value="100"></div>
   <div class="buttons">
-    <button id="throw" class="primary">Sand streuen</button>
+    <button id="throw">Sand streuen</button>
     <button id="keep" aria-pressed="false">Dauernd streuen</button>
     <button id="clear">Platte leeren</button>
   </div>
   <div id="info">startet …</div>
-  <div id="hint">Verändert langsam die Frequenz: Trifft sie eine Eigenfrequenz der Platte, sammelt sich der Sand auf den Knotenlinien.</div>
+  <div id="hint">Trifft die Frequenz eine Eigenfrequenz der Platte, sammelt sich der Sand auf den Knotenlinien. Bewegt den Frequenzregler deshalb langsam.</div>
 </aside>
 </main>
-<footer>Spiel von <a href="https://github.com/inversecrime/chladni">inversecrime</a>, nach Gander &amp; Kwok, <em>Chladni Figures and the Tacoma Bridge</em></footer>
+<footer>Spiel von <a href="https://github.com/inversecrime/chladni">inversecrime</a>, nach Gander &amp; Kwok, <a href="https://doi.org/10.1137/10081931X"><em>Chladni Figures and the Tacoma Bridge</em></a></footer>
 
 <script src="solver.js"></script>
 <script src="simulation.js"></script>
