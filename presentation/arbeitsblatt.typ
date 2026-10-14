@@ -1,6 +1,7 @@
 // Arbeitsblatt für die Gruppenarbeit nach dem Vortrag (Gruppen von 2–4, mit Laptop).
 // Kompilieren (im Ordner presentation/):  typst compile arbeitsblatt.typ
-// Seite 1: Animationen auf der Website (später auch das Spiel), Seite 2: Lautsprecher und Teller.
+// Seite 1: Animationen und Chladni-Spiel auf der Website, Seite 2: Lautsprecher und Teller.
+// Lösung zu Aufgabe 4 (Spiel, μ = 0.5): + bei f ≈ 23, × bei f ≈ 34, Ring bei f ≈ 50.
 
 // Farben der Universität Basel, wie in slides.typ
 #let dark = rgb("#2D373C")
@@ -25,6 +26,16 @@
 #let skizze(beschriftung) = stack(spacing: 0.4em,
   rect(width: 100%, height: 4.2cm, stroke: 0.6pt + dark.lighten(40%), radius: 3pt),
   text(size: 9pt, beschriftung))
+// Gesuchtes Muster im Spiel: Knotenlinien auf der quadratischen Platte, darunter Platz für die Frequenz
+#let s = 1.5cm
+#let linie(..pkte) = place(line(stroke: 1.6pt + dark, ..pkte))
+#let muster(form) = stack(spacing: 0.4em,
+  box(width: s, height: s, fill: mint.lighten(60%), stroke: 0.6pt + dark.lighten(40%), {
+    if form == "plus" { linie(start: (50%, 0%), end: (50%, 100%)); linie(start: (0%, 50%), end: (100%, 50%)) }
+    if form == "kreuz" { linie(start: (0%, 0%), end: (100%, 100%)); linie(start: (100%, 0%), end: (0%, 100%)) }
+    if form == "ring" { place(center + horizon, rect(width: 72%, height: 72%, radius: 30%, stroke: 1.6pt + dark)) }
+  }),
+  text(size: 9pt)[f = #box(width: 1cm, stroke: (bottom: 0.5pt))])
 
 = Wellen und Chladni-Figuren
 #text(fill: dark.lighten(25%))[Simulationen: *tinyurl.com/tecday26* #h(1fr) Gruppe: #box(width: 5cm, stroke: (bottom: 0.5pt))]
@@ -34,29 +45,44 @@
 #aufgabe[
   *Fliegender Ball.* Haltet den Ball am höchsten Punkt an. Wie gross sind $v$ und $a$?
   Warum ist $a$ dort nicht null?
-  #platz(2cm)
+  #platz(1.6cm)
 ]
 
 #aufgabe[
   *Stehende Welle.* Zählt die Knoten für $n = 1, 2, 3, 4$. Welche Regel findet ihr? \
   Schaltet «auch Zwischenwerte» ein: Warum kann eine eingespannte Saite nur bei ganz bestimmten
   Frequenzen schwingen?
-  #platz(2.6cm)
+  #platz(2.1cm)
 ]
 
 #aufgabe[
   *Raum-Zeit-Bild.* Wählt «Eigenschwingung» und sucht einen Punkt $x_0$, der sich nie bewegt.
   Woran erkennt ihr ihn im Raum-Zeit-Bild? \
   Was ist bei der «gezupften Saite» anders?
-  #platz(2.6cm)
+  #platz(2.1cm)
 ]
 
-// == Teil 2 · Chladni-Spiel
-// Aufgaben folgen, sobald das Spiel auf der Website ist (z.B. bestimmte Muster finden).
+== Teil 2 · Chladni-Spiel
+
+#aufgabe[
+  Schaltet «Dauernd streuen» ein und sucht die Frequenzen dieser drei Muster:
+  #v(0.3em)
+  #grid(columns: 3, column-gutter: 1.5cm, muster("plus"), muster("kreuz"), muster("ring"))
+]
+
+#aufgabe[
+  Was macht der Sand zwischen zwei Eigenfrequenzen? Warum?
+  #platz(1.4cm)
+]
+
+#aufgabe[
+  Ändert das Material $mu$. Was bleibt gleich, was ändert sich?
+  #platz(1.4cm)
+]
 
 #pagebreak()
 
-== Teil 2 · Eure eigene Chladni-Platte
+== Teil 3 · Eure eigene Chladni-Platte
 
 #text(size: 10pt, fill: dark.lighten(20%))[Material: Lautsprecher, Teller, Salz, Tongenerator (Handy oder Laptop)]
 
@@ -79,6 +105,6 @@
 ]
 
 #aufgabe[
-  Vergleicht mit den simulierten Figuren der quadratischen Platte. Was ist anders, und warum?
+  Vergleicht eure Muster mit dem Spiel. Was ist anders, und warum?
   #platz(2cm)
 ]
