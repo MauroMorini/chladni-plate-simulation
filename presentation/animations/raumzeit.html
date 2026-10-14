@@ -48,6 +48,14 @@ function u(x, t) {
   }
   return 0.8 * Math.sin(Math.PI * x) * Math.cos(Math.PI * t) + 0.3 * Math.sin(3 * Math.PI * x) * Math.cos(3 * Math.PI * t + 0.6);
 }
+// exakte Lösung als Text (muss zu u passen)
+function formula() {
+  if (modeSelect.value === "eigen") {
+    const n = parseInt(nSlider.value), k = n === 1 ? "π" : `${n}π`;
+    return `u(x, t) = sin(${k}x) · cos(${k}t)`;
+  }
+  return "u(x, t) = 0.8 sin(πx) · cos(πt) + 0.3 sin(3πx) · cos(3πt + 0.6)";
+}
 const dudx = (x, t) => (u(x + 1e-4, t) - u(x - 1e-4, t)) / 2e-4;
 const dudt = (x, t) => (u(x, t + 1e-4) - u(x, t - 1e-4)) / 2e-4;
 
@@ -145,10 +153,10 @@ function draw() {
   ctx.fillText("Ort x →", map.x + map.w / 2, map.y + map.h + 20);
   ctx.save(); ctx.translate(map.x - 25, map.y + map.h / 2); ctx.rotate(-Math.PI / 2);
   ctx.fillText("Zeit t →", 0, 0); ctx.restore();
-  ctx.font = "18px Inter, sans-serif"; ctx.textAlign = "left";
-  ctx.fillText("u(x, t)   (rot = oben, blau = unten)", map.x, map.y - 20);
+  ctx.font = "16px Inter, sans-serif"; ctx.textAlign = "left";
+  ctx.fillText(formula(), map.x, map.y - 20);
   ctx.font = "14px Inter, sans-serif"; ctx.fillStyle = GRAY;
-  ctx.fillText("Klick ins Bild: Punkt x₀ wählen", map.x, map.y + map.h + 46);
+  ctx.fillText("rot = oben, blau = unten   ·   Klick ins Bild: Punkt x₀ wählen", map.x, map.y + map.h + 46);
 
   // Foto: t fest, x variiert
   axes(photo, `Foto der Saite zur Zeit t = ${t.toFixed(2)}   (waagrechte Linie)`, "Ort x");
