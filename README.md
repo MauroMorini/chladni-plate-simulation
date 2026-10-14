@@ -240,8 +240,10 @@ bash site/build.sh                         # assembles the site into _site/ (ign
 python3 -m http.server -d _site 8000       # local preview at http://localhost:8000
 ```
 
-`build.sh` only copies files: the animations, the game, `presentation/slides.pdf` and the pictures. The slides are **not** compiled in CI (no Typst, no Inter font there), so run
-`typst compile slides.typ` in `presentation/` and commit `slides.pdf` before pushing slide changes.
+`build.sh` only copies files: the animations, the game, `presentation/slides.pdf`,
+`presentation/arbeitsblatt.pdf` and the pictures. The PDFs are **not** compiled in CI (no Typst, no Inter font
+there), so run `typst compile slides.typ` / `typst compile arbeitsblatt.typ` in `presentation/` and commit the PDFs
+before pushing changes.
 
 One-time setup: the repository must be public (GitHub Pages is not free for private repositories)
 and under Settings → Pages the source must be set to "GitHub Actions".
